@@ -1,0 +1,96 @@
+export type Project = {
+  id: string;
+  name: string;
+  baseUrl: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TestStep = {
+  type:
+    | 'goto'
+    | 'click'
+    | 'fill'
+    | 'press'
+    | 'select'
+    | 'wait'
+    | 'assertText'
+    | 'assertVisible'
+    | 'assertUrl';
+  url?: string;
+  selector?: string;
+  value?: string;
+  key?: string;
+  timeoutMs?: number;
+  text?: string;
+};
+
+export type TestDefinition = {
+  id: string;
+  projectId: string;
+  name: string;
+  startUrl: string;
+  steps: TestStep[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TestRunStatus = 'queued' | 'running' | 'passed' | 'failed' | 'canceled';
+
+export type TestRun = {
+  id: string;
+  projectId: string;
+  testDefinitionId: string;
+  status: TestRunStatus;
+  durationMs: number | null;
+  failureStep: number | null;
+  errorMessage: string | null;
+  logs: string[];
+  createdAt: string;
+  testDefinition?: TestDefinition;
+};
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...init?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(body || `Request failed with ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+export const api = {
+  listProjects: () => request<Project[]>('/projects'),
+  createProject: (input: { name: string; baseUrl: string }) =>
+    request<Project>('/projects', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  listTestDefinitions: (projectId: string) =>
+    request<TestDefinition[]>(`/projects/${projectId}/test-definitions`),
+  createTestDefinition: (input: {
+    projectId: string;
+    name: string;
+    startUrl: string;
+    steps: TestStep[];
+  }) =>
+    request<TestDefinition>('/test-definitions', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  listRuns: (projectId: string) => request<TestRun[]>(`/projects/${projectId}/runs`),
+  runTestDefinition: (testDefinitionId: string) =>
+    request<TestRun>(`/test-definitions/${testDefinitionId}/runs`, {
+      method: 'POST',
+    }),
+};
