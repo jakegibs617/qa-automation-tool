@@ -1,0 +1,47 @@
+{
+  "backend/package.json": {
+    "mtime": 1782262812.7923691,
+    "ast_hash": "42eb2d403154088e88b61a456e63fbc5",
+    "semantic_hash": "42eb2d403154088e88b61a456e63fbc5"
+  },
+  "backend/src/app.module.ts": {
+    "mtime": 1782262812.7924895,
+    "ast_hash": "549c63132cffaf9766d6442449824397",
+    "semantic_hash": "549c63132cffaf9766d6442449824397"
+  },
+  "backend/src/main.ts": {
+    "mtime": 1782262812.7924743,
+    "ast_hash": "a3aa941863b87adcb86c2c2ac505b25a",
+    "semantic_hash": "a3aa941863b87adcb86c2c2ac505b25a"
+  },
+  "backend/src/projects/dto/create-project.dto.ts": {
+    "mtime": 1782262812.8013303,
+    "ast_hash": "0f0118e89f5822afd57e71a656c571c3",
+    "semantic_hash": "0f0118e89f5822afd57e71a656c571c3"
+  },
+  "backend/src/projects/project.entity.ts": {
+    "mtime": 1782262812.7924902,
+    "ast_hash": "191427a77c38aa993d4483f50797d764",
+    "semantic_hash": "191427a77c38aa993d4483f50797d764"
+  },
+  "backend/src/projects/projects.controller.ts": {
+    "mtime": 1782262812.8164115,
+    "ast_hash": "a05dad4fa1cdbe9099c5208dd65d8705",
+    "semantic_hash": "a05dad4fa1cdbe9099c5208dd65d8705"
+  },
+  "backend/src/projects/projects.module.ts": {
+    "mtime": 1782262812.8164256,
+    "ast_hash": "02d3b9de1021d49ac4f95c7c93fee88d",
+    "semantic_hash": "02d3b9de1021d49ac4f95c7c93fee88d"
+  },
+  "backend/src/projects/projects.service.ts": {
+    "mtime": 1782262812.8013613,
+    "ast_hash": "46168db5f50d19a2cdfe28905d168535",
+    "semantic_hash": "46168db5f50d19a2cdfe28905d168535"
+  },
+  "backend/tsconfig.json": {
+    "mtime": 1782262812.792365,
+    "ast_hash": "fc18efd7e52821877903e6f53a30dac0",
+    "semantic_hash": "fc18efd7e52821877903e6f53a30dac0"
+  }
+}

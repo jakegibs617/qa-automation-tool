@@ -1,0 +1,1599 @@
+{
+  "nodes": [
+    {
+      "id": "backend_package",
+      "label": "package.json",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_name",
+      "label": "name",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L2",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_version",
+      "label": "version",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_private",
+      "label": "private",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_scripts",
+      "label": "scripts",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_scripts_dev",
+      "label": "dev",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_scripts_build",
+      "label": "build",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_scripts_start",
+      "label": "start",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies",
+      "label": "dependencies",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_nestjs_common",
+      "label": "@nestjs/common",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_nestjs_core",
+      "label": "@nestjs/core",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_nestjs_platform_express",
+      "label": "@nestjs/platform-express",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_nestjs_swagger",
+      "label": "@nestjs/swagger",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_class_transformer",
+      "label": "class-transformer",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L15",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_class_validator",
+      "label": "class-validator",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L16",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_pg",
+      "label": "pg",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_reflect_metadata",
+      "label": "reflect-metadata",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_rimraf",
+      "label": "rimraf",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L19",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_typeorm",
+      "label": "typeorm",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L20",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_bullmq",
+      "label": "bullmq",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L21",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_ioredis",
+      "label": "ioredis",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_dependencies_playwright",
+      "label": "playwright",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L23",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_devdependencies",
+      "label": "devDependencies",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L25",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_devdependencies_nestjs_cli",
+      "label": "@nestjs/cli",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_devdependencies_nestjs_schematics",
+      "label": "@nestjs/schematics",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L27",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_devdependencies_types_node",
+      "label": "@types/node",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L28",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_devdependencies_ts_node_dev",
+      "label": "ts-node-dev",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L29",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_package_devdependencies_typescript",
+      "label": "typescript",
+      "file_type": "code",
+      "source_file": "backend/package.json",
+      "source_location": "L30",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_module",
+      "label": "app.module.ts",
+      "file_type": "code",
+      "source_file": "backend/src/app.module.ts",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_module_appmodule",
+      "label": "AppModule",
+      "file_type": "code",
+      "source_file": "backend/src/app.module.ts",
+      "source_location": "L20",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_main",
+      "label": "main.ts",
+      "file_type": "code",
+      "source_file": "backend/src/main.ts",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_main_bootstrap",
+      "label": "bootstrap()",
+      "file_type": "code",
+      "source_file": "backend/src/main.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "dto_create_project_dto",
+      "label": "create-project.dto.ts",
+      "file_type": "code",
+      "source_file": "backend/src/projects/dto/create-project.dto.ts",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "dto_create_project_dto_createprojectdto",
+      "label": "CreateProjectDto",
+      "file_type": "code",
+      "source_file": "backend/src/projects/dto/create-project.dto.ts",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_project_entity",
+      "label": "project.entity.ts",
+      "file_type": "code",
+      "source_file": "backend/src/projects/project.entity.ts",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_project_entity_project",
+      "label": "Project",
+      "file_type": "code",
+      "source_file": "backend/src/projects/project.entity.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_controller",
+      "label": "projects.controller.ts",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_controller_projectscontroller",
+      "label": "ProjectsController",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_controller_projectscontroller_constructor",
+      "label": ".constructor()",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_controller_projectscontroller_create",
+      "label": ".create()",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_controller_projectscontroller_findall",
+      "label": ".findAll()",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L15",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_controller_projectscontroller_findone",
+      "label": ".findOne()",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L20",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_module",
+      "label": "projects.module.ts",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_module_projectsmodule",
+      "label": "ProjectsModule",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_service",
+      "label": "projects.service.ts",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_service_projectsservice",
+      "label": "ProjectsService",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_service_projectsservice_constructor",
+      "label": ".constructor()",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_service_projectsservice_create",
+      "label": ".create()",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_service_projectsservice_findall",
+      "label": ".findAll()",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "projects_projects_service_projectsservice_findone",
+      "label": ".findOne()",
+      "file_type": "code",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig",
+      "label": "tsconfig.json",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L2",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_module",
+      "label": "module",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_target",
+      "label": "target",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_lib",
+      "label": "lib",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_moduleresolution",
+      "label": "moduleResolution",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_sourcemap",
+      "label": "sourceMap",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_outdir",
+      "label": "outDir",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_emitdecoratormetadata",
+      "label": "emitDecoratorMetadata",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_experimentaldecorators",
+      "label": "experimentalDecorators",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_strict",
+      "label": "strict",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_skiplibcheck",
+      "label": "skipLibCheck",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_esmoduleinterop",
+      "label": "esModuleInterop",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_compileroptions_resolvejsonmodule",
+      "label": "resolveJsonModule",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_include",
+      "label": "include",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L16",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_tsconfig_exclude",
+      "label": "exclude",
+      "file_type": "code",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L17",
+      "_origin": "ast"
+    }
+  ],
+  "edges": [
+    {
+      "source": "backend_package",
+      "target": "backend_package_name",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package",
+      "target": "backend_package_version",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package",
+      "target": "backend_package_private",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package",
+      "target": "backend_package_scripts",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_scripts",
+      "target": "backend_package_scripts_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_scripts",
+      "target": "backend_package_scripts_build",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_scripts",
+      "target": "backend_package_scripts_start",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package",
+      "target": "backend_package_dependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_nestjs_common",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_nestjs_common",
+      "target": "nestjs_common",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L11",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_nestjs_core",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_nestjs_core",
+      "target": "nestjs_core",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_nestjs_platform_express",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_nestjs_platform_express",
+      "target": "nestjs_platform_express",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_nestjs_swagger",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_nestjs_swagger",
+      "target": "nestjs_swagger",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_class_transformer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_class_transformer",
+      "target": "class_transformer",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_class_validator",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_class_validator",
+      "target": "class_validator",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_pg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_pg",
+      "target": "pg",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_reflect_metadata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_reflect_metadata",
+      "target": "reflect_metadata",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L18",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_rimraf",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_rimraf",
+      "target": "rimraf",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L19",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_typeorm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_typeorm",
+      "target": "typeorm",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L20",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_bullmq",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_bullmq",
+      "target": "bullmq",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L21",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_ioredis",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_ioredis",
+      "target": "ioredis",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_dependencies",
+      "target": "backend_package_dependencies_playwright",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_dependencies_playwright",
+      "target": "playwright",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L23",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package",
+      "target": "backend_package_devdependencies",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_devdependencies",
+      "target": "backend_package_devdependencies_nestjs_cli",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_devdependencies_nestjs_cli",
+      "target": "nestjs_cli",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L26",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_devdependencies",
+      "target": "backend_package_devdependencies_nestjs_schematics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_devdependencies_nestjs_schematics",
+      "target": "nestjs_schematics",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L27",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_devdependencies",
+      "target": "backend_package_devdependencies_types_node",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_devdependencies_types_node",
+      "target": "types_node",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L28",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_devdependencies",
+      "target": "backend_package_devdependencies_ts_node_dev",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_devdependencies_ts_node_dev",
+      "target": "ts_node_dev",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L29",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_package_devdependencies",
+      "target": "backend_package_devdependencies_typescript",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_package_devdependencies_typescript",
+      "target": "typescript",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/package.json",
+      "source_location": "L30",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "src_app_module",
+      "target": "common",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/app.module.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_module",
+      "target": "typeorm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/app.module.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_module",
+      "target": "projects_projects_module",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/app.module.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_module",
+      "target": "projects_projects_module_projectsmodule",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/app.module.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_module",
+      "target": "src_app_module_appmodule",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/app.module.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "src_main",
+      "target": "core",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/main.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "src_main",
+      "target": "src_app_module",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/main.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_main",
+      "target": "src_app_module_appmodule",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/main.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "src_main",
+      "target": "src_main_bootstrap",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/main.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "dto_create_project_dto",
+      "target": "class_validator",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/dto/create-project.dto.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "dto_create_project_dto",
+      "target": "dto_create_project_dto_createprojectdto",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/dto/create-project.dto.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_project_entity",
+      "target": "typeorm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/project.entity.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_project_entity",
+      "target": "projects_project_entity_project",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/project.entity.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller",
+      "target": "common",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller",
+      "target": "dto_create_project_dto",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller",
+      "target": "dto_create_project_dto_createprojectdto",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller",
+      "target": "projects_projects_service",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller",
+      "target": "projects_projects_service_projectsservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller",
+      "target": "projects_projects_controller_projectscontroller",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller_projectscontroller",
+      "target": "projects_projects_controller_projectscontroller_constructor",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller_projectscontroller",
+      "target": "projects_projects_controller_projectscontroller_create",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller_projectscontroller",
+      "target": "projects_projects_controller_projectscontroller_findall",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller_projectscontroller",
+      "target": "projects_projects_controller_projectscontroller_findone",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_module",
+      "target": "common",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_module",
+      "target": "typeorm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_module",
+      "target": "projects_project_entity",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_module",
+      "target": "projects_project_entity_project",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_module",
+      "target": "projects_projects_controller",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_module",
+      "target": "projects_projects_controller_projectscontroller",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_module",
+      "target": "projects_projects_service",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_module",
+      "target": "projects_projects_service_projectsservice",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_module",
+      "target": "projects_projects_module_projectsmodule",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.module.ts",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service",
+      "target": "common",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service",
+      "target": "typeorm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service",
+      "target": "typeorm",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service",
+      "target": "dto_create_project_dto",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service",
+      "target": "dto_create_project_dto_createprojectdto",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service",
+      "target": "projects_project_entity",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service",
+      "target": "projects_project_entity_project",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service",
+      "target": "projects_projects_service_projectsservice",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service_projectsservice",
+      "target": "projects_projects_service_projectsservice_constructor",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service_projectsservice",
+      "target": "projects_projects_service_projectsservice_create",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service_projectsservice",
+      "target": "projects_projects_service_projectsservice_findall",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service_projectsservice",
+      "target": "projects_projects_service_projectsservice_findone",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig",
+      "target": "backend_tsconfig_compileroptions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_module",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_target",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_lib",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions_lib",
+      "target": "ref_es2020",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_moduleresolution",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_sourcemap",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_outdir",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_emitdecoratormetadata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_experimentaldecorators",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_strict",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_skiplibcheck",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_esmoduleinterop",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_compileroptions",
+      "target": "backend_tsconfig_compileroptions_resolvejsonmodule",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig",
+      "target": "backend_tsconfig_include",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_include",
+      "target": "ref_src_ts",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L16",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_tsconfig",
+      "target": "backend_tsconfig_exclude",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "backend_tsconfig_exclude",
+      "target": "ref_node_modules",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "backend_tsconfig_exclude",
+      "target": "ref_dist",
+      "relation": "extends",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/tsconfig.json",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "import"
+    },
+    {
+      "source": "projects_projects_controller_projectscontroller_constructor",
+      "target": "projects_projects_service_projectsservice",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_controller_projectscontroller_create",
+      "target": "dto_create_project_dto_createprojectdto",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.controller.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service_projectsservice_constructor",
+      "target": "projects_project_entity_project",
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "projects_projects_service_projectsservice_create",
+      "target": "dto_create_project_dto_createprojectdto",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/src/projects/projects.service.ts",
+      "source_location": "L13",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

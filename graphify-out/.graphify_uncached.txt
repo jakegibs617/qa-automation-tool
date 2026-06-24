@@ -1,0 +1,12 @@
+/Users/jacobgiberson/Desktop/qa-automation-tool/backend/package.json
+/Users/jacobgiberson/Desktop/qa-automation-tool/backend/src/app.module.ts
+/Users/jacobgiberson/Desktop/qa-automation-tool/backend/src/main.ts
+/Users/jacobgiberson/Desktop/qa-automation-tool/backend/src/projects/dto/create-project.dto.ts
+/Users/jacobgiberson/Desktop/qa-automation-tool/backend/src/projects/project.entity.ts
+/Users/jacobgiberson/Desktop/qa-automation-tool/backend/src/projects/projects.controller.ts
+/Users/jacobgiberson/Desktop/qa-automation-tool/backend/src/projects/projects.module.ts
+/Users/jacobgiberson/Desktop/qa-automation-tool/backend/src/projects/projects.service.ts
+/Users/jacobgiberson/Desktop/qa-automation-tool/backend/tsconfig.json
+/Users/jacobgiberson/Desktop/qa-automation-tool/README.md
+/Users/jacobgiberson/Desktop/qa-automation-tool/plan.md
+/Users/jacobgiberson/Desktop/qa-automation-tool/progress.md

@@ -1,0 +1,155 @@
+{
+  "communities": {
+    "0": [
+      "dto_create_project_dto",
+      "dto_create_project_dto_createprojectdto",
+      "projects_project_entity",
+      "projects_project_entity_project",
+      "projects_projects_controller",
+      "projects_projects_controller_projectscontroller",
+      "projects_projects_controller_projectscontroller_constructor",
+      "projects_projects_controller_projectscontroller_create",
+      "projects_projects_controller_projectscontroller_findall",
+      "projects_projects_controller_projectscontroller_findone",
+      "projects_projects_module",
+      "projects_projects_service",
+      "projects_projects_service_projectsservice",
+      "projects_projects_service_projectsservice_constructor",
+      "projects_projects_service_projectsservice_create",
+      "projects_projects_service_projectsservice_findall",
+      "projects_projects_service_projectsservice_findone"
+    ],
+    "1": [
+      "backend_tsconfig",
+      "backend_tsconfig_compileroptions",
+      "backend_tsconfig_compileroptions_emitdecoratormetadata",
+      "backend_tsconfig_compileroptions_esmoduleinterop",
+      "backend_tsconfig_compileroptions_experimentaldecorators",
+      "backend_tsconfig_compileroptions_lib",
+      "backend_tsconfig_compileroptions_module",
+      "backend_tsconfig_compileroptions_moduleresolution",
+      "backend_tsconfig_compileroptions_outdir",
+      "backend_tsconfig_compileroptions_resolvejsonmodule",
+      "backend_tsconfig_compileroptions_skiplibcheck",
+      "backend_tsconfig_compileroptions_sourcemap",
+      "backend_tsconfig_compileroptions_strict",
+      "backend_tsconfig_compileroptions_target",
+      "backend_tsconfig_exclude",
+      "backend_tsconfig_include"
+    ],
+    "2": [
+      "backend_package_dependencies",
+      "backend_package_dependencies_bullmq",
+      "backend_package_dependencies_class_transformer",
+      "backend_package_dependencies_class_validator",
+      "backend_package_dependencies_ioredis",
+      "backend_package_dependencies_nestjs_common",
+      "backend_package_dependencies_nestjs_core",
+      "backend_package_dependencies_nestjs_platform_express",
+      "backend_package_dependencies_nestjs_swagger",
+      "backend_package_dependencies_pg",
+      "backend_package_dependencies_playwright",
+      "backend_package_dependencies_reflect_metadata",
+      "backend_package_dependencies_rimraf",
+      "backend_package_dependencies_typeorm"
+    ],
+    "3": [
+      "backend_package",
+      "backend_package_name",
+      "backend_package_private",
+      "backend_package_scripts",
+      "backend_package_scripts_build",
+      "backend_package_scripts_dev",
+      "backend_package_scripts_start",
+      "backend_package_version"
+    ],
+    "4": [
+      "backend_package_devdependencies",
+      "backend_package_devdependencies_nestjs_cli",
+      "backend_package_devdependencies_nestjs_schematics",
+      "backend_package_devdependencies_ts_node_dev",
+      "backend_package_devdependencies_types_node",
+      "backend_package_devdependencies_typescript"
+    ],
+    "5": [
+      "projects_projects_module_projectsmodule",
+      "src_app_module",
+      "src_app_module_appmodule",
+      "src_main",
+      "src_main_bootstrap"
+    ],
+    "6": [
+      "progress-tracker"
+    ],
+    "7": [
+      "qa-automation-tool"
+    ]
+  },
+  "cohesion": {
+    "0": 0.22058823529411764,
+    "1": 0.125,
+    "2": 0.14285714285714285,
+    "3": 0.25,
+    "4": 0.3333333333333333,
+    "5": 0.5,
+    "6": 1.0,
+    "7": 1.0
+  },
+  "gods": [
+    {
+      "id": "backend_tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 13
+    },
+    {
+      "id": "projects_projects_service_projectsservice",
+      "label": "ProjectsService",
+      "degree": 8
+    },
+    {
+      "id": "projects_projects_controller_projectscontroller",
+      "label": "ProjectsController",
+      "degree": 6
+    },
+    {
+      "id": "dto_create_project_dto_createprojectdto",
+      "label": "CreateProjectDto",
+      "degree": 5
+    },
+    {
+      "id": "backend_package_scripts",
+      "label": "scripts",
+      "degree": 4
+    },
+    {
+      "id": "projects_project_entity_project",
+      "label": "Project",
+      "degree": 4
+    },
+    {
+      "id": "src_app_module_appmodule",
+      "label": "AppModule",
+      "degree": 2
+    },
+    {
+      "id": "projects_projects_module_projectsmodule",
+      "label": "ProjectsModule",
+      "degree": 2
+    },
+    {
+      "id": "backend_package_private",
+      "label": "private",
+      "degree": 1
+    },
+    {
+      "id": "backend_package_scripts_dev",
+      "label": "dev",
+      "degree": 1
+    }
+  ],
+  "surprises": [],
+  "tokens": {
+    "input": 2232,
+    "output": 204
+  }
+}
