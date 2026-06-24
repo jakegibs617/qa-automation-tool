@@ -7,6 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "smoke:checkpoint2": "ts-node scripts/checkpoint2-smoke.ts",
     "smoke:checkpoint4": "ts-node scripts/checkpoint4-smoke.ts",
+    "smoke:checkpoint5": "ts-node scripts/checkpoint5-smoke.ts",
     "start": "node dist/main.js",
     "typeorm": "typeorm-ts-node-commonjs -d src/database/data-source.ts",
     "migration:run": "npm run typeorm -- migration:run",

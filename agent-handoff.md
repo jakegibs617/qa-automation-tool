@@ -1,107 +1,53 @@
 # Agent Handoff
 
 ## Current Repo State
-- Working branch is `checkpoint/04-artifacts-run-detail` (branched from `main`).
-- Latest merged commit on `main` is `291521d Merge pull request #1 from jakegibs617/checkpoint/03-frontend-shell`.
-- Checkpoints 1, 2, and 3 are implemented and merged; Checkpoint 4 is implemented on the working branch and pending PR/merge.
+- Work for Checkpoint 5 is on branch `checkpoint/05-playwright-runner` (branched from `main`), pending PR/merge.
+- Latest commit on `main` is `e090c6e Merge pull request #2 from jakegibs617/checkpoint/04-artifacts-run-detail`.
+- Checkpoints 1, 2, 3, and 4 are implemented and merged. Checkpoint 5 (real Playwright runner) is implemented on the working branch.
 - NestJS backend exists in `backend/` and listens on `http://localhost:4000`.
 - Next.js frontend exists in `frontend/` and listens on `http://localhost:3000`.
 - Local PostgreSQL is provided by `docker-compose.yml` and published on host port `55432`.
-- `progress.md` shows Checkpoint 3 completed and verified.
+- `progress.md` shows Checkpoint 5 completed and verified.
 - `plan.md` defines the broader MVP: projects, test definitions, runner, run history, scheduling, notifications, artifacts, and AI workflows.
 - A Graphify run exists in `graphify-out/`.
 
 ## Completed Work
-- Checkpoint 1: PostgreSQL + TypeORM configuration, core entities, and initial migration.
-- Core entities:
-  - `Project`
-  - `TestDefinition`
-  - `TestRun`
-  - `Artifact`
-- Checkpoint 2: test definition model and runner scaffolding.
-- Added `TestDefinitionsModule` with endpoints for:
-  - `POST /test-definitions`
-  - `GET /projects/:projectId/test-definitions`
-  - `GET /projects/:projectId/test-definitions/:id`
-- Added MVP test JSON validation for:
-  - `name`
-  - `projectId`
-  - `startUrl`
-  - `steps`
-  - step types: `goto`, `click`, `fill`, `press`, `select`, `wait`, `assertText`, `assertVisible`, `assertUrl`
-- Added `TestRunsModule` with endpoints for:
-  - `POST /test-definitions/:testDefinitionId/runs`
-  - `GET /projects/:projectId/runs`
-  - `GET /test-runs/:id`
-- Added runner scaffold that loads a `TestDefinition`, creates a `TestRun`, dispatches steps through `StepDispatcherService`, records status/duration/failure step/logs, and writes a `log` artifact record.
-- Added `backend/scripts/checkpoint2-smoke.ts` and `npm run smoke:checkpoint2`.
-- Checkpoint 3: frontend app shell.
-- Added `frontend/` with Next.js, TypeScript, Tailwind, and lucide icons.
-- Frontend shell includes:
-  - project list/search/create
-  - project detail panel
-  - test definition creation from JSON
-  - test definition list
-  - run trigger
-  - run history
-  - status badges and basic dashboard stats
-- Added `frontend/scripts/smoke-app-shell.mjs` and `npm run smoke:app-shell`.
-- Updated `README.md` with frontend setup and verification commands.
+- Checkpoint 1: PostgreSQL + TypeORM configuration, core entities (`Project`, `TestDefinition`, `TestRun`, `Artifact`), and initial migration.
+- Checkpoint 2: test definition model and runner scaffolding (`TestDefinitionsModule`, `TestRunsModule`, MVP step validation, run creation/execution stub, `npm run smoke:checkpoint2`).
+- Checkpoint 3: Next.js frontend app shell (project list/create, definition create/list, run trigger, run history; `npm run smoke:app-shell`).
+- Checkpoint 4: `ArtifactStorageService` (local-disk under `ARTIFACTS_DIR`), structured `report.json` log artifact, `ArtifactsModule` content/streaming endpoints, frontend run detail route `/runs/[runId]`, `npm run smoke:checkpoint4`.
+- Checkpoint 5: real Playwright execution.
+  - `StepDispatcherService` (`backend/src/test-runs/step-dispatcher.service.ts`) now executes real Playwright actions against a live `Page` for every supported step type. A `resolveUrl` helper resolves relative `goto`/`assertUrl` targets against the project `baseUrl`. Actions throw on failure (timeout, missing element, failed assertion).
+  - New `PlaywrightRunnerService` (`backend/src/test-runs/playwright-runner.service.ts`) owns the headless Chromium lifecycle: launches a browser/context with tracing, navigates to the definition `startUrl`, runs each step, and on failure captures a real PNG screenshot (`page.screenshot`) and a Playwright trace zip. On success tracing is stopped and discarded. Operational test failures are returned in the `RunnerOutcome` rather than thrown; a failed initial navigation is reported as `failureStep` 0. Browser/temp cleanup is in a `finally`. Default action timeout is `PLAYWRIGHT_TIMEOUT_MS` (15s).
+  - `TestRunsService` (`backend/src/test-runs/test-runs.service.ts`) loads the definition with its `project` relation, delegates execution to `PlaywrightRunnerService`, and persists the real `failure.png` (`image/png`) and `trace.zip` (`application/zip`) on failure. The SVG/JSON placeholder builders in `run-report.ts` are now only a fallback used when real capture returns null. Artifact persistence remains best-effort. If the runner itself throws (infra error), the run is saved as `failed` with the error message.
+  - `PlaywrightRunnerService` is registered in `TestRunsModule` providers.
+  - Added `npm run smoke:checkpoint5` (`backend/scripts/checkpoint5-smoke.ts`): DB-free, launches real Chromium against an in-process HTTP server and asserts the passing path (no failure artifacts), the failing path (real PNG screenshot + zip trace buffers), and the navigation-failure path. The checkpoint 2 smoke no longer calls the dispatcher directly (it needs a live page now); it still covers DTO validation.
 
-## Verification Already Performed
-- Backend:
-  - `cd backend && npm run build`
-  - `cd backend && npm run migration:run`
-  - `cd backend && npm run smoke:checkpoint2`
-  - Manual API smoke against local Postgres:
-    - created a project
-    - created a test definition
-    - ran the test definition
-    - confirmed status `passed`
-    - confirmed persisted runner logs and a `log` artifact
-- Frontend:
-  - `cd frontend && npm run build`
-  - `cd frontend && npm run smoke:app-shell`
-  - `cd frontend && npm audit --omit=dev`
-  - Browser checks at desktop and mobile widths.
-  - Full-stack UI smoke:
-    - created a project
-    - created a test definition
-    - triggered a run
-    - confirmed a rendered `Passed` status
-
-## Checkpoint 4 (Completed on this branch)
-- Added `ArtifactStorageService` (`backend/src/artifacts/artifact-storage.service.ts`): local-disk storage under `ARTIFACTS_DIR` (defaults to `backend/.artifacts`), with path-traversal guarding and read/write/stream helpers.
-- Extended the runner (`test-runs.service.ts`) to record per-step structured results and write a structured `report.json` log artifact via `buildRunReport` (`run-report.ts`). Failed runs additionally write an SVG failure-screenshot placeholder and a JSON trace placeholder.
-- Added `ArtifactsModule` with `GET /test-runs/:id/artifacts`, `GET /artifacts/:id`, and `GET /artifacts/:id/content` (streams via NestJS `StreamableFile`, no `@types/express` dependency needed).
-- Added frontend run detail route `frontend/app/runs/[runId]/page.tsx` (status, duration, timestamp, failure step, error, structured steps, logs, downloadable artifact list); run history rows now link into it.
-- Added `npm run smoke:checkpoint4` (DB-free unit smoke for storage + report builders) and extended the frontend smoke to assert the run detail route renders.
-
-## Known Limitations / Notes for Checkpoint 4
-- The failure-path artifacts (screenshot/trace) are only reachable once a step can actually fail. The current `StepDispatcherService` is a stub that never fails for valid steps, so failure artifacts are exercised by the unit smoke rather than the live API.
+## Verification Already Performed (Checkpoint 5)
+- `cd backend && npm run build`
+- `cd backend && npm run smoke:checkpoint2 && npm run smoke:checkpoint4 && npm run smoke:checkpoint5`
+- Full-stack API smoke against local Postgres (`docker compose up -d postgres`, `npm run migration:run`, `npm run dev`):
+  - created a project whose `baseUrl` pointed at a local static page server,
+  - created a definition with a deliberately failing `assertText` and ran it,
+  - confirmed `status: failed`, `failureStep: 2`, a descriptive `errorMessage`, and three artifacts: `report.json` (log), `failure.png` (`image/png`, real 1280×720 screenshot), `trace.zip` (`application/zip`),
+  - downloaded the screenshot via `GET /artifacts/:id/content` and confirmed correct `Content-Type`/`Content-Disposition` and real PNG bytes,
+  - confirmed a passing run produced only the `report.json` log artifact (no failure screenshot/trace).
 
 ## Goal for Next Agent
-Wire real Playwright execution into the runner so assertions can fail and produce real failure screenshots/traces, replacing the current placeholders.
+Move run execution off the request path so the UI can reflect live `queued`/`running` status, and/or harden the runner.
 
 ## Recommended Next Work
-1. Create or switch to a dedicated branch, for example `checkpoint/05-playwright-runner`.
-2. Replace the `StepDispatcherService` stub with real Playwright actions (`goto`, `click`, `fill`, `press`, `select`, `wait`, `assertText`, `assertVisible`, `assertUrl`) running against the project `baseUrl` + definition `startUrl`.
-3. On failure, capture a real screenshot (and optionally trace/video) and store it through `ArtifactStorageService` in place of the SVG/JSON placeholders.
-4. Consider moving run execution off the request path (BullMQ + ioredis are already dependencies) so runs can be `queued`/`running` and polled by the UI.
-5. Keep `report.json` as the structured run report; extend it with real step timings/outputs.
-6. Add focused smoke checks for the Playwright runner and update `progress.md` when finished.
+1. Create or switch to a dedicated branch, e.g. `checkpoint/06-async-runs`.
+2. Move run execution to a background worker (BullMQ + ioredis are already dependencies). NOTE: there is no Redis service in `docker-compose.yml` yet — add one. The run endpoint should enqueue and return immediately with status `queued`; the worker transitions `queued` → `running` → `passed`/`failed`.
+3. Add run-detail/run-history polling (or SSE/websocket) in the frontend so `running` runs update live. The run detail route is `frontend/app/runs/[runId]/page.tsx`.
+4. Optionally capture video and richer per-step output in `report.json`.
+5. Add focused smoke checks for the async path and update `progress.md` when finished.
 
 ## Notes for the Next Agent
-- Use NestJS + TypeORM in `backend/`.
-- Keep `npm` as the package manager.
-- Backend defaults are in `backend/.env.example`; Compose PostgreSQL uses `DB_PORT=55432`.
-- Start local Postgres with `docker compose up -d postgres`.
-- Run backend migrations with `cd backend && npm run migration:run`.
-- Start backend with `cd backend && npm run dev`.
-- Start frontend with `cd frontend && npm run dev`.
-- The frontend uses `NEXT_PUBLIC_API_URL`, defaulting to `http://localhost:4000`.
-- Frontend currently uses Next.js 16, React 19, TypeScript, Tailwind, and lucide icons.
-- Avoid turning the frontend into a marketing page; keep it as a practical QA operations shell.
-- There is no formal backend unit test suite yet; only the smoke scripts exist.
-- A useful backend hardening step would be adding Jest tests for DTO validation, `StepDispatcherService`, `TestDefinitionsService`, and `TestRunsService`.
+- Use NestJS + TypeORM in `backend/`; keep `npm` as the package manager.
+- Backend defaults are in `backend/.env.example`; Compose PostgreSQL uses `DB_PORT=55432`. Start it with `docker compose up -d postgres`, run migrations with `cd backend && npm run migration:run`.
+- Start backend with `cd backend && npm run dev`; start frontend with `cd frontend && npm run dev`.
+- The Playwright runner needs browsers installed locally (`npx playwright install chromium`); they were already present in the dev environment used for Checkpoint 5.
+- The frontend uses `NEXT_PUBLIC_API_URL`, defaulting to `http://localhost:4000`; Next.js 16 / React 19 / Tailwind / lucide icons. Keep it a practical QA operations shell, not a marketing page.
+- There is still no formal backend unit test suite; only the smoke scripts exist. Jest tests for DTO validation, `StepDispatcherService`, and `TestRunsService` would be a useful hardening step.
 - After implementation, create a PR and perform a code review before merging if the environment supports it.

@@ -15,7 +15,14 @@
   - `ArtifactsModule` endpoints: `GET /test-runs/:id/artifacts`, `GET /artifacts/:id`, and `GET /artifacts/:id/content` (streams content with correct content type/disposition).
   - Frontend run detail route `/runs/[runId]` showing status, duration, timestamp, failure step, error, structured steps, logs, and a downloadable artifact list; run history rows link into it.
 - Verified Checkpoint 4 with `npm run build` + `npm run smoke:checkpoint4` (backend), `npm run build` + `npm run smoke:app-shell` (frontend), and a full-stack API smoke against local Postgres (created project/definition, ran it, confirmed `passed` status, persisted `report.json` log artifact, and content retrieval with correct headers). Failure-path artifacts (screenshot/trace) are covered by the unit smoke since the stub dispatcher does not fail for valid steps yet.
+- Checkpoint 5 real Playwright runner:
+  - `StepDispatcherService` now executes real Playwright actions against a live `Page` (`goto`, `click`, `fill`, `press`, `select`, `wait`, `assertText`, `assertVisible`, `assertUrl`), with relative URLs resolved against the project `baseUrl`.
+  - New `PlaywrightRunnerService` owns the headless Chromium lifecycle: navigates to the definition `startUrl`, runs each step, and on failure captures a real PNG screenshot and a Playwright trace zip (tracing discarded on success). Operational test failures are returned as an outcome, not thrown; a navigation failure is reported as `failureStep` 0.
+  - `TestRunsService` delegates execution to the runner, persists the real `failure.png` (`image/png`) and `trace.zip` (`application/zip`) on failure, and falls back to the SVG/JSON placeholders only if capture failed. Artifact persistence remains best-effort.
+  - Added `npm run smoke:checkpoint5` (DB-free; launches real Chromium against an in-process server and asserts the passing path, the failing path's real PNG + zip-trace buffers, and the navigation-failure path).
+- Verified Checkpoint 5 with `npm run build` + `npm run smoke:checkpoint2/4/5` (backend) and a full-stack API smoke against local Postgres: a failing run produced a real `failure.png` (1280×720, image/png) and `trace.zip` (application/zip) served with correct headers, while a passing run produced only the `report.json` log artifact.
 
 ## Next
-- Wire real Playwright execution into `StepDispatcherService` so assertions can fail and produce real failure screenshots/traces.
+- Consider moving run execution off the request path (BullMQ + ioredis are already dependencies; no Redis service is defined in `docker-compose.yml` yet) so runs can be `queued`/`running` and polled by the UI.
 - Add run history/run detail polling or live status for `running` runs.
+- Optionally capture video and expand `report.json` with richer per-step timings/outputs.
