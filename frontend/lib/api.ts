@@ -37,6 +37,19 @@ export type TestDefinition = {
 
 export type TestRunStatus = 'queued' | 'running' | 'passed' | 'failed' | 'canceled';
 
+export type ArtifactType = 'screenshot' | 'video' | 'trace' | 'log';
+
+export type Artifact = {
+  id: string;
+  projectId: string;
+  testRunId: string;
+  type: ArtifactType;
+  storageKey: string;
+  contentType: string | null;
+  sizeBytes: string | null;
+  createdAt: string;
+};
+
 export type TestRun = {
   id: string;
   projectId: string;
@@ -48,6 +61,30 @@ export type TestRun = {
   logs: string[];
   createdAt: string;
   testDefinition?: TestDefinition;
+  artifacts?: Artifact[];
+};
+
+export type StepResult = {
+  stepNumber: number;
+  type: string;
+  status: 'passed' | 'failed' | 'skipped';
+  log: string;
+  durationMs: number;
+};
+
+export type RunReport = {
+  runId: string;
+  projectId: string;
+  testDefinitionId: string;
+  testDefinitionName: string;
+  status: TestRunStatus;
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  failureStep: number | null;
+  errorMessage: string | null;
+  steps: StepResult[];
+  logs: string[];
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -93,4 +130,15 @@ export const api = {
     request<TestRun>(`/test-definitions/${testDefinitionId}/runs`, {
       method: 'POST',
     }),
+  getRun: (id: string) => request<TestRun>(`/test-runs/${id}`),
+  listRunArtifacts: (testRunId: string) =>
+    request<Artifact[]>(`/test-runs/${testRunId}/artifacts`),
+  artifactContentUrl: (id: string) => `${API_URL}/artifacts/${id}/content`,
+  fetchArtifactText: async (id: string) => {
+    const response = await fetch(`${API_URL}/artifacts/${id}/content`);
+    if (!response.ok) {
+      throw new Error(`Failed to load artifact content (${response.status})`);
+    }
+    return response.text();
+  },
 };
