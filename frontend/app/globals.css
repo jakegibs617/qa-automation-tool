@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
+  --panel: 0 0% 100%;
+  --border: 214 20% 88%;
+  --muted: 210 20% 94%;
+  --muted-foreground: 215 16% 42%;
+  --accent: 174 56% 32%;
+  --accent-foreground: 0 0% 100%;
+  --success: 142 52% 32%;
+  --danger: 0 66% 45%;
+  --warning: 38 92% 42%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 2px;
+}
