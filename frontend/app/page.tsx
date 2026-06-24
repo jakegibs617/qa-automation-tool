@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
   Activity,
   AlertCircle,
@@ -568,11 +569,12 @@ function RunHistory({ runs, isLoading }: { runs: TestRun[]; isLoading: boolean }
                 <th className="px-3 py-3 font-semibold">Duration</th>
                 <th className="px-3 py-3 font-semibold">Failure</th>
                 <th className="px-3 py-3 font-semibold">Created</th>
+                <th className="px-3 py-3 text-right font-semibold">Detail</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {runs.map((run) => (
-                <tr key={run.id}>
+                <tr key={run.id} className="transition hover:bg-muted/50">
                   <td className="px-3 py-3">
                     <StatusBadge status={run.status} />
                   </td>
@@ -586,6 +588,15 @@ function RunHistory({ runs, isLoading }: { runs: TestRun[]; isLoading: boolean }
                     {run.failureStep === null ? '-' : run.failureStep}
                   </td>
                   <td className="px-3 py-3 text-muted-foreground">{formatDate(run.createdAt)}</td>
+                  <td className="px-3 py-3 text-right">
+                    <Link
+                      href={`/runs/${run.id}`}
+                      className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background px-3 text-xs font-medium hover:bg-muted"
+                    >
+                      View
+                      <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

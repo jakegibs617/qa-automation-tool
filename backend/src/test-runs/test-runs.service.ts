@@ -2,9 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Artifact } from '../artifacts/artifact.entity';
+import { ArtifactStorageService } from '../artifacts/artifact-storage.service';
 import { TestDefinition } from '../test-definitions/test-definition.entity';
-import { TestRun } from './test-run.entity';
+import { TestRun, TestRunStatus } from './test-run.entity';
 import { StepDispatcherService } from './step-dispatcher.service';
+import {
+  buildFailurePlaceholderSvg,
+  buildRunReport,
+  buildTracePlaceholder,
+  RunReport,
+  StepResult,
+} from './run-report';
 
 @Injectable()
 export class TestRunsService {
@@ -16,6 +24,7 @@ export class TestRunsService {
     @InjectRepository(Artifact)
     private readonly artifactRepository: Repository<Artifact>,
     private readonly stepDispatcher: StepDispatcherService,
+    private readonly storage: ArtifactStorageService,
   ) {}
 
   async runTestDefinition(testDefinitionId: string) {
@@ -37,32 +46,79 @@ export class TestRunsService {
     );
 
     const startedAt = Date.now();
-    let failedStep: number | null = null;
+    const logs: string[] = [`Starting test run for "${testDefinition.name}"`];
+    const steps: StepResult[] = [];
+    let failureStep: number | null = null;
     let errorMessage: string | null = null;
 
-    try {
-      for (const [index, step] of testDefinition.steps.entries()) {
-        const stepNumber = index + 1;
-        failedStep = stepNumber;
-        const result = await this.stepDispatcher.dispatch(step, stepNumber);
-        testRun.logs = [...testRun.logs, result.log];
-      }
+    for (const [index, step] of testDefinition.steps.entries()) {
+      const stepNumber = index + 1;
+      const stepStartedAt = Date.now();
 
-      failedStep = null;
-      testRun.status = 'passed';
-      testRun.logs = [...testRun.logs, 'Test run completed successfully'];
-    } catch (error) {
-      errorMessage = error instanceof Error ? error.message : 'Unknown runner error';
-      testRun.status = 'failed';
-      testRun.logs = [...testRun.logs, errorMessage];
+      try {
+        const result = await this.stepDispatcher.dispatch(step, stepNumber);
+        logs.push(result.log);
+        steps.push({
+          stepNumber,
+          type: step.type,
+          status: 'passed',
+          log: result.log,
+          durationMs: Date.now() - stepStartedAt,
+        });
+      } catch (error) {
+        failureStep = stepNumber;
+        errorMessage = error instanceof Error ? error.message : 'Unknown runner error';
+        const log = `${stepNumber}. ${step.type} failed: ${errorMessage}`;
+        logs.push(log);
+        steps.push({
+          stepNumber,
+          type: step.type,
+          status: 'failed',
+          log,
+          durationMs: Date.now() - stepStartedAt,
+        });
+        break;
+      }
     }
 
-    testRun.durationMs = Date.now() - startedAt;
-    testRun.failureStep = failedStep;
+    const status: TestRunStatus = failureStep === null ? 'passed' : 'failed';
+    logs.push(
+      status === 'passed'
+        ? 'Test run completed successfully'
+        : `Test run failed at step ${failureStep}`,
+    );
+
+    const finishedAt = Date.now();
+    testRun.status = status;
+    testRun.durationMs = finishedAt - startedAt;
+    testRun.failureStep = failureStep;
     testRun.errorMessage = errorMessage;
+    testRun.logs = logs;
     testRun = await this.testRunRepository.save(testRun);
 
-    await this.createLogArtifact(testRun);
+    const report = buildRunReport({
+      runId: testRun.id,
+      projectId: testRun.projectId,
+      testDefinitionId: testDefinition.id,
+      testDefinitionName: testDefinition.name,
+      status,
+      startedAt,
+      finishedAt,
+      failureStep,
+      errorMessage,
+      steps,
+      logs,
+    });
+
+    // Artifact persistence is best-effort: a storage hiccup must not fail an
+    // otherwise-completed run that is already saved.
+    try {
+      await this.writeRunArtifacts(testRun, report);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'Unknown artifact error';
+      testRun.logs = [...testRun.logs, `Failed to persist run artifacts: ${reason}`];
+      await this.testRunRepository.save(testRun);
+    }
 
     return this.findOne(testRun.id);
   }
@@ -88,17 +144,50 @@ export class TestRunsService {
     return testRun;
   }
 
-  private createLogArtifact(testRun: TestRun) {
-    const body = JSON.stringify(testRun.logs, null, 2);
+  private async writeRunArtifacts(testRun: TestRun, report: RunReport) {
+    await this.saveArtifact(testRun, {
+      type: 'log',
+      storageKey: `runs/${testRun.id}/report.json`,
+      contentType: 'application/json',
+      content: JSON.stringify(report, null, 2),
+    });
+
+    if (report.status === 'failed') {
+      await this.saveArtifact(testRun, {
+        type: 'screenshot',
+        storageKey: `runs/${testRun.id}/failure.svg`,
+        contentType: 'image/svg+xml',
+        content: buildFailurePlaceholderSvg(report),
+      });
+
+      await this.saveArtifact(testRun, {
+        type: 'trace',
+        storageKey: `runs/${testRun.id}/trace.placeholder.json`,
+        contentType: 'application/json',
+        content: buildTracePlaceholder(report),
+      });
+    }
+  }
+
+  private async saveArtifact(
+    testRun: TestRun,
+    input: {
+      type: Artifact['type'];
+      storageKey: string;
+      contentType: string;
+      content: string;
+    },
+  ) {
+    const sizeBytes = await this.storage.write(input.storageKey, input.content);
 
     return this.artifactRepository.save(
       this.artifactRepository.create({
         projectId: testRun.projectId,
         testRunId: testRun.id,
-        type: 'log',
-        storageKey: `runs/${testRun.id}/logs.json`,
-        contentType: 'application/json',
-        sizeBytes: String(Buffer.byteLength(body)),
+        type: input.type,
+        storageKey: input.storageKey,
+        contentType: input.contentType,
+        sizeBytes: String(sizeBytes),
       }),
     );
   }
