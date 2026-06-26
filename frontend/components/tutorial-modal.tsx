@@ -10,6 +10,7 @@ import {
   GraduationCap,
   ListChecks,
   PlayCircle,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,16 +22,19 @@ export type TutorialLiveProgress = {
   run: boolean;
 };
 
-type Progress = TutorialLiveProgress & { viewedRun: boolean };
+type Progress = TutorialLiveProgress & { usedAi: boolean; viewedRun: boolean };
 
 const STORAGE_KEY = 'qa-tutorial-progress';
 /** Set by the run-detail page on mount; see app/runs/[runId]/page.tsx. */
 export const TUTORIAL_VIEWED_RUN_KEY = 'qa-tutorial-viewed-run';
+/** Set when AI step generation succeeds; see the definition form in app/page.tsx. */
+export const TUTORIAL_USED_AI_KEY = 'qa-tutorial-used-ai';
 
 const EMPTY: Progress = {
   project: false,
   definition: false,
   run: false,
+  usedAi: false,
   viewedRun: false,
 };
 
@@ -51,6 +55,9 @@ function readStored(): Progress {
 
   if (window.localStorage.getItem(TUTORIAL_VIEWED_RUN_KEY)) {
     stored.viewedRun = true;
+  }
+  if (window.localStorage.getItem(TUTORIAL_USED_AI_KEY)) {
+    stored.usedAi = true;
   }
 
   return stored;
@@ -75,6 +82,13 @@ export const STEP_META = [
     icon: ListChecks,
     title: 'Add a test definition',
     body: 'Give it a start URL and steps to run (goto, click, assertText, …).',
+  },
+  {
+    progressKey: 'usedAi' as const,
+    target: 'ai-generate',
+    icon: Sparkles,
+    title: 'Generate steps with AI',
+    body: 'Describe a test in plain English and let Claude draft the steps for you to review and edit.',
   },
   {
     progressKey: 'run' as const,
@@ -115,6 +129,10 @@ export function TutorialModal({
         project: prev.project || live.project,
         definition: prev.definition || live.definition,
         run: prev.run || live.run,
+        usedAi:
+          prev.usedAi ||
+          (typeof window !== 'undefined' &&
+            Boolean(window.localStorage.getItem(TUTORIAL_USED_AI_KEY))),
         viewedRun:
           prev.viewedRun ||
           (typeof window !== 'undefined' &&
@@ -159,6 +177,7 @@ export function TutorialModal({
     try {
       window.localStorage.removeItem(STORAGE_KEY);
       window.localStorage.removeItem(TUTORIAL_VIEWED_RUN_KEY);
+      window.localStorage.removeItem(TUTORIAL_USED_AI_KEY);
     } catch {
       // ignore
     }

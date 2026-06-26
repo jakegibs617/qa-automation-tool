@@ -18,6 +18,7 @@ import {
   Plus,
   RefreshCcw,
   Search,
+  Sparkles,
 } from 'lucide-react';
 import { api, Project, TestDefinition, TestRun, TestStep } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -423,6 +424,39 @@ function TestDefinitionForm({
   const [startUrl, setStartUrl] = useState('/');
   const [steps, setSteps] = useState(starterSteps);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [prompt, setPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  async function handleGenerate() {
+    if (!prompt.trim()) {
+      return;
+    }
+    setIsGenerating(true);
+    onMessage(null);
+
+    try {
+      const generated = await api.generateSteps({
+        prompt,
+        startUrl,
+        baseUrl: project.baseUrl,
+      });
+      // Populate the form for review/edit — the user confirms before saving.
+      if (generated.name) setName(generated.name);
+      if (generated.startUrl) setStartUrl(generated.startUrl);
+      setSteps(JSON.stringify(generated.steps, null, 2));
+      try {
+        window.localStorage.setItem('qa-tutorial-used-ai', '1');
+      } catch {
+        // Tutorial progress is best-effort.
+      }
+    } catch (error) {
+      onMessage(
+        error instanceof Error ? error.message : 'Unable to generate steps',
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -444,6 +478,7 @@ function TestDefinitionForm({
       setName('');
       setStartUrl('/');
       setSteps(starterSteps);
+      setPrompt('');
       await onCreated();
     } catch (error) {
       onMessage(error instanceof Error ? error.message : 'Unable to create test definition');
@@ -461,6 +496,37 @@ function TestDefinitionForm({
       <div className="mb-4 flex items-center gap-2">
         <FileJson className="h-4 w-4 text-accent" aria-hidden="true" />
         <h3 className="text-sm font-semibold">New test definition</h3>
+      </div>
+      <div
+        data-tutorial="ai-generate"
+        className="mb-3 rounded-md border border-dashed border-accent/50 bg-accent/5 p-3"
+      >
+        <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-accent">
+          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+          Describe the test in plain English
+        </label>
+        <textarea
+          value={prompt}
+          onChange={(event) => setPrompt(event.target.value)}
+          className="min-h-[60px] w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-xs leading-5"
+          placeholder="e.g. Log in with a valid account and confirm the dashboard heading is visible"
+        />
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={isGenerating || !prompt.trim()}
+          className="mt-2 inline-flex h-8 w-full items-center justify-center gap-2 rounded-md border border-accent bg-background px-3 text-xs font-medium text-accent hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isGenerating ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Sparkles className="h-3.5 w-3.5" />
+          )}
+          Generate steps with AI
+        </button>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">
+          Generated steps fill the fields below for you to review and edit before saving.
+        </p>
       </div>
       <div className="space-y-3">
         <input
