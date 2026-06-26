@@ -54,7 +54,19 @@ export class TestRunsService {
       }),
     );
 
-    await this.runQueue.enqueue(testRun.id);
+    try {
+      await this.runQueue.enqueue(testRun.id);
+    } catch (error) {
+      // If the queue is unreachable, don't leave a run stuck in `queued`
+      // forever (the UI polls pending runs indefinitely). Mark it failed.
+      const message =
+        error instanceof Error ? error.message : 'Failed to enqueue run';
+      testRun.status = 'failed';
+      testRun.errorMessage = `Could not enqueue run: ${message}`;
+      testRun.failureStep = 0;
+      testRun.logs = [...testRun.logs, `Failed to enqueue run: ${message}`];
+      await this.testRunRepository.save(testRun);
+    }
 
     return this.findOne(testRun.id);
   }

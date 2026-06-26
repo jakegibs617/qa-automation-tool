@@ -154,6 +154,17 @@ describe('TestRunsService.enqueueRun', () => {
     const result = await service.enqueueRun('def-1');
     expect(result).toMatchObject({ id: 'run-1', __fetched: true });
   });
+
+  it('marks the run failed when enqueue throws so it is not stuck queued', async () => {
+    const { service, runQueue, statusHistory } = setup();
+    runQueue.enqueue.mockRejectedValueOnce(new Error('redis down'));
+
+    await service.enqueueRun('def-1');
+
+    expect(statusHistory).toEqual(['queued', 'failed']);
+    const failedSave = statusHistory.lastIndexOf('failed');
+    expect(failedSave).toBeGreaterThanOrEqual(0);
+  });
 });
 
 describe('TestRunsService.executeRun', () => {
