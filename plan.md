@@ -2,6 +2,17 @@ Use this as a project brief for an implementation agent.
 
 ---
 
+# Active Priorities (next milestones)
+
+These two are the current top priorities, to be delivered as separate milestones in order, toward a demoable MVP:
+
+1. **AI Test Generation (Phase 4)** — replace the raw JSON "steps" field in the test-definition form with a natural-language **prompt**. Claude (`@anthropic-ai/sdk`, model `claude-opus-4-8`) converts the description into the existing structured step schema. Flow is **generate → review/edit**: the generated steps populate the form for the user to tweak before saving/running. Requires `ANTHROPIC_API_KEY` in the backend env; the endpoint must fail gracefully with a clear message when it is absent.
+2. **Recorder (Phase 2)** — capture **discrete actions → resilient-selector steps** (clicks, inputs, navigation, selects) and convert them to the same JSON step schema (resilient-selector order: `data-testid` → `aria-label` → `role` → `text` → CSS). Built as the Chrome extension described in Phase 2 below. Mouse movement is used only to infer targets, not stored as a continuous recording.
+
+The loop building these ends once both are merged and a coherent MVP demo is ready to test.
+
+---
+
 # Project: Open Source QA Automation
 
 ## Overview

@@ -130,6 +130,11 @@ export const api = {
     request<TestRun>(`/test-definitions/${testDefinitionId}/runs`, {
       method: 'POST',
     }),
+  generateSteps: (input: { prompt: string; startUrl?: string; baseUrl?: string }) =>
+    request<{ name: string; startUrl: string; steps: TestStep[] }>(
+      '/ai/generate-steps',
+      { method: 'POST', body: JSON.stringify(input) },
+    ),
   getRun: (id: string) => request<TestRun>(`/test-runs/${id}`),
   listRunArtifacts: (testRunId: string) =>
     request<Artifact[]>(`/test-runs/${testRunId}/artifacts`),
