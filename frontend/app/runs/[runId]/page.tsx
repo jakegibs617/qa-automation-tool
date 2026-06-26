@@ -58,6 +58,15 @@ export default function RunDetailPage() {
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [message, setMessage] = useState<string | null>(null);
 
+  // Mark the tutorial's "view results & artifacts" step done on first visit.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('qa-tutorial-viewed-run', '1');
+    } catch {
+      // Storage may be unavailable; the tutorial step simply stays unchecked.
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;

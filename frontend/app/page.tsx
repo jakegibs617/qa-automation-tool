@@ -12,6 +12,7 @@ import {
   ExternalLink,
   FileJson,
   Gauge,
+  GraduationCap,
   Loader2,
   Play,
   Plus,
@@ -21,6 +22,8 @@ import {
 import { api, Project, TestDefinition, TestRun, TestStep } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/status-badge';
+import { TutorialModal } from '@/components/tutorial-modal';
+import { TutorialWalkthrough } from '@/components/tutorial-walkthrough';
 
 const starterSteps = JSON.stringify(
   [
@@ -43,6 +46,8 @@ export default function Home() {
   const [message, setMessage] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [runningDefinitionId, setRunningDefinitionId] = useState<string | null>(null);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [walkthroughStep, setWalkthroughStep] = useState<number | null>(null);
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null;
 
@@ -234,6 +239,14 @@ export default function Home() {
                 </h2>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTutorialOpen(true)}
+                  className="inline-flex h-9 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-muted"
+                >
+                  <GraduationCap className="h-4 w-4" aria-hidden="true" />
+                  Tutorial
+                </button>
                 {selectedProject ? (
                   <a
                     href={selectedProject.baseUrl}
@@ -306,6 +319,26 @@ export default function Home() {
           )}
         </section>
       </div>
+
+      <TutorialModal
+        open={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
+        onStartWalkthrough={() => {
+          setTutorialOpen(false);
+          setWalkthroughStep(0);
+        }}
+        live={{
+          project: projects.length > 0,
+          definition: definitions.length > 0,
+          run: runs.length > 0,
+        }}
+      />
+
+      <TutorialWalkthrough
+        step={walkthroughStep}
+        onStep={setWalkthroughStep}
+        onClose={() => setWalkthroughStep(null)}
+      />
     </main>
   );
 }
@@ -339,7 +372,11 @@ function ProjectForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-md border border-border bg-background p-3 shadow-panel">
+    <form
+      onSubmit={handleSubmit}
+      data-tutorial="create-project"
+      className="rounded-md border border-border bg-background p-3 shadow-panel"
+    >
       <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
         <Plus className="h-4 w-4" aria-hidden="true" />
         New project
@@ -416,7 +453,11 @@ function TestDefinitionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-md border border-border bg-panel p-4 shadow-panel">
+    <form
+      onSubmit={handleSubmit}
+      data-tutorial="add-definition"
+      className="rounded-md border border-border bg-panel p-4 shadow-panel"
+    >
       <div className="mb-4 flex items-center gap-2">
         <FileJson className="h-4 w-4 text-accent" aria-hidden="true" />
         <h3 className="text-sm font-semibold">New test definition</h3>
@@ -521,7 +562,10 @@ function DefinitionList({
   }, [runs]);
 
   return (
-    <section className="min-w-0 rounded-md border border-border bg-panel shadow-panel">
+    <section
+      data-tutorial="run-test"
+      className="min-w-0 rounded-md border border-border bg-panel shadow-panel"
+    >
       <SectionHeader icon={ClipboardList} title="Test definitions" />
       {isLoading ? (
         <TableLoading />
@@ -584,7 +628,10 @@ function DefinitionList({
 
 function RunHistory({ runs, isLoading }: { runs: TestRun[]; isLoading: boolean }) {
   return (
-    <section className="min-w-0 rounded-md border border-border bg-panel shadow-panel">
+    <section
+      data-tutorial="view-results"
+      className="min-w-0 rounded-md border border-border bg-panel shadow-panel"
+    >
       <SectionHeader icon={Activity} title="Run history" />
       {isLoading ? (
         <TableLoading />
