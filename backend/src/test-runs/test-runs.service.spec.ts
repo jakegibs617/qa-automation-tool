@@ -2,8 +2,6 @@ import { NotFoundException } from '@nestjs/common';
 import { TestRunsService } from './test-runs.service';
 import { RunnerOutcome } from './playwright-runner.service';
 
-type AnyMock = jest.Mock;
-
 const buildDefinition = () => ({
   id: 'def-1',
   projectId: 'proj-1',
@@ -11,6 +9,14 @@ const buildDefinition = () => ({
   startUrl: '/login',
   steps: [{ type: 'goto', url: '/login' }],
   project: { baseUrl: 'http://base.test' },
+});
+
+const buildQueuedRun = () => ({
+  id: 'run-1',
+  projectId: 'proj-1',
+  testDefinitionId: 'def-1',
+  status: 'queued' as const,
+  logs: ['Run queued for "Login flow"'],
 });
 
 const passingOutcome = (): RunnerOutcome => ({
@@ -45,16 +51,37 @@ const failingOutcome = (overrides: Partial<RunnerOutcome> = {}): RunnerOutcome =
   ...overrides,
 });
 
-const setup = (definition: ReturnType<typeof buildDefinition> | null) => {
+type SetupOptions = {
+  definition?: ReturnType<typeof buildDefinition> | null;
+  runRecord?: ReturnType<typeof buildQueuedRun> | null;
+};
+
+const setup = (options: SetupOptions = {}) => {
+  const definition =
+    'definition' in options ? options.definition : buildDefinition();
+  const runRecord =
+    'runRecord' in options ? options.runRecord : buildQueuedRun();
+
   const savedArtifacts: Array<Record<string, unknown>> = [];
+  // The service mutates a single run object in place, so capture the status at
+  // each save to observe the queued → running → passed/failed transitions.
+  const statusHistory: string[] = [];
 
   const testRunRepository = {
     create: jest.fn((input) => ({ ...input })),
     save: jest.fn(async (run) => {
       if (!run.id) run.id = 'run-1';
+      statusHistory.push(run.status);
       return run;
     }),
-    findOne: jest.fn(async ({ where }) => ({ id: where.id, __fetched: true })),
+    // findOne is used both to load the queued run (no relations) and to reload
+    // the fully-hydrated run at the end (with relations).
+    findOne: jest.fn(async ({ where, relations }) => {
+      if (relations) {
+        return { id: where.id, __fetched: true };
+      }
+      return runRecord;
+    }),
     find: jest.fn(),
   };
 
@@ -72,6 +99,7 @@ const setup = (definition: ReturnType<typeof buildDefinition> | null) => {
 
   const runner = { run: jest.fn() };
   const storage = { write: jest.fn(async () => 1234) };
+  const runQueue = { enqueue: jest.fn(async () => undefined) };
 
   const service = new TestRunsService(
     testRunRepository as never,
@@ -79,6 +107,7 @@ const setup = (definition: ReturnType<typeof buildDefinition> | null) => {
     artifactRepository as never,
     runner as never,
     storage as never,
+    runQueue as never,
   );
 
   return {
@@ -88,29 +117,86 @@ const setup = (definition: ReturnType<typeof buildDefinition> | null) => {
     artifactRepository,
     runner,
     storage,
+    runQueue,
     savedArtifacts,
+    statusHistory,
   };
 };
 
 const storageKeys = (savedArtifacts: Array<Record<string, unknown>>) =>
   savedArtifacts.map((artifact) => artifact.storageKey as string);
 
-describe('TestRunsService.runTestDefinition', () => {
+describe('TestRunsService.enqueueRun', () => {
   it('throws NotFoundException when the definition does not exist', async () => {
-    const { service, runner } = setup(null);
-    await expect(service.runTestDefinition('missing')).rejects.toBeInstanceOf(
+    const { service, runQueue } = setup({ definition: null });
+    await expect(service.enqueueRun('missing')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(runQueue.enqueue).not.toHaveBeenCalled();
+  });
+
+  it('persists a queued run and enqueues it, without running the browser', async () => {
+    const { service, testRunRepository, runner, runQueue } = setup();
+
+    await service.enqueueRun('def-1');
+
+    const created = testRunRepository.create.mock.calls[0][0];
+    expect(created.status).toBe('queued');
+    expect(created.projectId).toBe('proj-1');
+    expect(created.testDefinitionId).toBe('def-1');
+
+    expect(runQueue.enqueue).toHaveBeenCalledWith('run-1');
+    expect(runner.run).not.toHaveBeenCalled();
+  });
+
+  it('returns the freshly reloaded queued run via findOne', async () => {
+    const { service } = setup();
+    const result = await service.enqueueRun('def-1');
+    expect(result).toMatchObject({ id: 'run-1', __fetched: true });
+  });
+
+  it('marks the run failed when enqueue throws so it is not stuck queued', async () => {
+    const { service, runQueue, statusHistory } = setup();
+    runQueue.enqueue.mockRejectedValueOnce(new Error('redis down'));
+
+    await service.enqueueRun('def-1');
+
+    expect(statusHistory).toEqual(['queued', 'failed']);
+    const failedSave = statusHistory.lastIndexOf('failed');
+    expect(failedSave).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('TestRunsService.executeRun', () => {
+  it('throws NotFoundException when the run is missing', async () => {
+    const { service, runner } = setup({ runRecord: null });
+    await expect(service.executeRun('missing')).rejects.toBeInstanceOf(
       NotFoundException,
     );
     expect(runner.run).not.toHaveBeenCalled();
   });
 
-  it('delegates to the runner with the project baseUrl, startUrl, and steps', async () => {
+  it('marks the run failed when its definition no longer exists', async () => {
+    const { service, testRunRepository, runner } = setup({ definition: null });
+
+    await service.executeRun('run-1');
+
+    const savedRun = testRunRepository.save.mock.calls.at(-1)![0];
+    expect(savedRun.status).toBe('failed');
+    expect(savedRun.errorMessage).toBe('Test definition not found');
+    expect(runner.run).not.toHaveBeenCalled();
+  });
+
+  it('transitions to running and delegates to the runner with project context', async () => {
     const definition = buildDefinition();
-    const { service, runner } = setup(definition);
+    const { service, runner, statusHistory } = setup({ definition });
     runner.run.mockResolvedValue(passingOutcome());
 
-    await service.runTestDefinition('def-1');
+    await service.executeRun('run-1');
 
+    // First save transitions queued → running, the last records the result.
+    expect(statusHistory[0]).toBe('running');
+    expect(statusHistory.at(-1)).toBe('passed');
     expect(runner.run).toHaveBeenCalledWith({
       baseUrl: 'http://base.test',
       startUrl: '/login',
@@ -119,11 +205,10 @@ describe('TestRunsService.runTestDefinition', () => {
   });
 
   it('persists a passing run with only the report.json log artifact', async () => {
-    const { service, testRunRepository, runner, savedArtifacts } =
-      setup(buildDefinition());
+    const { service, testRunRepository, runner, savedArtifacts } = setup();
     runner.run.mockResolvedValue(passingOutcome());
 
-    await service.runTestDefinition('def-1');
+    await service.executeRun('run-1');
 
     const savedRun = testRunRepository.save.mock.calls.at(-1)![0];
     expect(savedRun.status).toBe('passed');
@@ -134,11 +219,10 @@ describe('TestRunsService.runTestDefinition', () => {
   });
 
   it('persists a failed run with the report, real screenshot, and trace artifacts', async () => {
-    const { service, testRunRepository, runner, savedArtifacts } =
-      setup(buildDefinition());
+    const { service, testRunRepository, runner, savedArtifacts } = setup();
     runner.run.mockResolvedValue(failingOutcome());
 
-    await service.runTestDefinition('def-1');
+    await service.executeRun('run-1');
 
     const savedRun = testRunRepository.save.mock.calls.at(-1)![0];
     expect(savedRun.status).toBe('failed');
@@ -155,12 +239,12 @@ describe('TestRunsService.runTestDefinition', () => {
   });
 
   it('falls back to placeholder artifacts when real capture returned null', async () => {
-    const { service, runner, savedArtifacts } = setup(buildDefinition());
+    const { service, runner, savedArtifacts } = setup();
     runner.run.mockResolvedValue(
       failingOutcome({ screenshot: null, trace: null }),
     );
 
-    await service.runTestDefinition('def-1');
+    await service.executeRun('run-1');
 
     expect(storageKeys(savedArtifacts)).toEqual([
       'runs/run-1/report.json',
@@ -170,10 +254,10 @@ describe('TestRunsService.runTestDefinition', () => {
   });
 
   it('records a failed run when the runner itself throws', async () => {
-    const { service, testRunRepository, runner } = setup(buildDefinition());
+    const { service, testRunRepository, runner } = setup();
     runner.run.mockRejectedValue(new Error('browser crashed'));
 
-    await service.runTestDefinition('def-1');
+    await service.executeRun('run-1');
 
     const savedRun = testRunRepository.save.mock.calls.at(-1)![0];
     expect(savedRun.status).toBe('failed');
@@ -182,24 +266,24 @@ describe('TestRunsService.runTestDefinition', () => {
   });
 
   it('does not fail the run when artifact persistence throws (best-effort)', async () => {
-    const { service, testRunRepository, runner, storage } = setup(buildDefinition());
+    const { service, testRunRepository, runner, storage } = setup();
     runner.run.mockResolvedValue(passingOutcome());
     storage.write.mockRejectedValueOnce(new Error('disk full'));
 
-    const result = await service.runTestDefinition('def-1');
+    const result = await service.executeRun('run-1');
 
     expect(result).toBeDefined();
     const savedRun = testRunRepository.save.mock.calls.at(-1)![0];
-    expect(savedRun.logs.some((l: string) => l.includes('Failed to persist run artifacts'))).toBe(
-      true,
-    );
+    expect(
+      savedRun.logs.some((l: string) => l.includes('Failed to persist run artifacts')),
+    ).toBe(true);
   });
 
   it('returns the freshly reloaded run via findOne', async () => {
-    const { service, runner, testRunRepository } = setup(buildDefinition());
+    const { service, runner, testRunRepository } = setup();
     runner.run.mockResolvedValue(passingOutcome());
 
-    const result = await service.runTestDefinition('def-1');
+    const result = await service.executeRun('run-1');
 
     expect(testRunRepository.findOne).toHaveBeenLastCalledWith({
       where: { id: 'run-1' },
@@ -211,7 +295,7 @@ describe('TestRunsService.runTestDefinition', () => {
 
 describe('TestRunsService.findOne', () => {
   it('throws NotFoundException when the run is missing', async () => {
-    const { service, testRunRepository } = setup(buildDefinition());
+    const { service, testRunRepository } = setup();
     testRunRepository.findOne.mockResolvedValueOnce(null as never);
     await expect(service.findOne('missing')).rejects.toBeInstanceOf(NotFoundException);
   });

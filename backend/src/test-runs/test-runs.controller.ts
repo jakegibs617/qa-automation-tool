@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { TestRunsService } from './test-runs.service';
 
 @Controller()
@@ -6,8 +6,9 @@ export class TestRunsController {
   constructor(private readonly testRunsService: TestRunsService) {}
 
   @Post('test-definitions/:testDefinitionId/runs')
+  @HttpCode(HttpStatus.ACCEPTED)
   runTestDefinition(@Param('testDefinitionId') testDefinitionId: string) {
-    return this.testRunsService.runTestDefinition(testDefinitionId);
+    return this.testRunsService.enqueueRun(testDefinitionId);
   }
 
   @Get('projects/:projectId/runs')

@@ -28,7 +28,15 @@
   - `test-runs.service.spec.ts`: `TestRunsService.runTestDefinition` with mocked repos/runner/storage — not-found, runner delegation args, passing run (only `report.json`), failing run (real `failure.png` + `trace.zip`), null-capture placeholder fallback, runner-throws → failed run, best-effort artifact persistence, and final `findOne` reload.
   - `tsconfig.json` excludes `*.spec.ts` from the production build; verified `dist/` contains no spec files after a clean build.
 
+- Checkpoint 7 async run execution (off the request path):
+  - Added a `redis:7-alpine` service to `docker-compose.yml` (host port `6379`) and `REDIS_HOST`/`REDIS_PORT`/`RUN_WORKER_CONCURRENCY` to `backend/.env.example`.
+  - New BullMQ wiring in `backend/src/test-runs/`: `run-queue.ts` (shared queue/job names + `buildRedisConnection`), `RunQueueService` (enqueues one job per run), and `RunWorkerService` (drains the queue and calls `executeRun`). Both are registered in `TestRunsModule`.
+  - `TestRunsService` split: `enqueueRun` creates a `queued` run, enqueues it, and returns immediately; `executeRun` (worker-driven) transitions `queued` → `running`, drives Playwright, and persists the outcome/artifacts (same artifact logic as before). The run endpoint now returns `202 Accepted` with a `queued` run.
+  - Frontend now polls every 1.5s while a run is `queued`/`running`: the run-detail route (`frontend/app/runs/[runId]/page.tsx`) and the dashboard run history (`frontend/app/page.tsx`) update live until a terminal status.
+  - Added `npm run smoke:checkpoint7` (DB-free; exercises the real queue/worker round-trip against Redis) and rewrote `test-runs.service.spec.ts` to cover the `enqueueRun`/`executeRun` split (45 jest tests pass).
+- Verified Checkpoint 7 with `npm run build` + `npm test` + `npm run smoke:checkpoint2/4/5/7` (backend, Redis via `docker compose up -d redis`), `npm run lint` + `npm run build` (frontend), and a full-stack async flow against local Postgres + Redis: triggering a run returned `202`/`queued` immediately, then polling observed `running` → `passed` (only `report.json`) and, for a deliberately failing definition, `running` → `failed` with a real `failure.png` + `trace.zip`.
+
 ## Next
-- Consider moving run execution off the request path (BullMQ + ioredis are already dependencies; no Redis service is defined in `docker-compose.yml` yet) so runs can be `queued`/`running` and polled by the UI.
-- Add run history/run detail polling or live status for `running` runs.
 - Optionally capture video and expand `report.json` with richer per-step timings/outputs.
+- Consider a `canceled` transition and a cancel endpoint (the status enum already includes `canceled`); the worker could honor a cancellation flag.
+- Consider run retries/backoff on infra errors (BullMQ supports `attempts`/`backoff`).

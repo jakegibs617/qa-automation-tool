@@ -105,6 +105,35 @@ export default function Home() {
     }
   }, [selectedProjectId]);
 
+  // While any run is queued or running, silently refresh the run list so the
+  // history and latest-status reflect the background worker's progress.
+  const hasPendingRun = runs.some(
+    (run) => run.status === 'queued' || run.status === 'running',
+  );
+
+  useEffect(() => {
+    if (!selectedProjectId || !hasPendingRun) {
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setInterval(async () => {
+      try {
+        const runResult = await api.listRuns(selectedProjectId);
+        if (!cancelled) {
+          setRuns(runResult);
+        }
+      } catch {
+        // Transient refresh failures are ignored; the next tick retries.
+      }
+    }, 1500);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [selectedProjectId, hasPendingRun]);
+
   async function handleRun(testDefinitionId: string) {
     setRunningDefinitionId(testDefinitionId);
     setMessage(null);

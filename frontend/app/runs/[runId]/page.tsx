@@ -30,6 +30,11 @@ import { StatusBadge } from '@/components/status-badge';
 
 type LoadState = 'loading' | 'ready' | 'error';
 
+const POLL_INTERVAL_MS = 1500;
+
+const isPendingStatus = (status: TestRun['status']) =>
+  status === 'queued' || status === 'running';
+
 const artifactIcon: Record<ArtifactType, typeof FileText> = {
   log: FileText,
   screenshot: ImageIcon,
@@ -55,10 +60,13 @@ export default function RunDetailPage() {
 
   useEffect(() => {
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    async function load() {
-      setLoadState('loading');
-      setMessage(null);
+    async function load(isInitial: boolean) {
+      if (isInitial) {
+        setLoadState('loading');
+        setMessage(null);
+      }
 
       try {
         const runResult = await api.getRun(runId);
@@ -82,6 +90,12 @@ export default function RunDetailPage() {
         if (!cancelled) {
           setLoadState('ready');
         }
+
+        // Keep polling while the run is still in flight so the UI reflects the
+        // queued → running → passed/failed transitions the worker drives.
+        if (!cancelled && isPendingStatus(runResult.status)) {
+          timer = setTimeout(() => void load(false), POLL_INTERVAL_MS);
+        }
       } catch (error) {
         if (!cancelled) {
           setLoadState('error');
@@ -90,10 +104,13 @@ export default function RunDetailPage() {
       }
     }
 
-    void load();
+    void load(true);
 
     return () => {
       cancelled = true;
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
   }, [runId]);
 

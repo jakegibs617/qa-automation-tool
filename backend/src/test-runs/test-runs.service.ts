@@ -9,6 +9,7 @@ import {
   PlaywrightRunnerService,
   RunnerOutcome,
 } from './playwright-runner.service';
+import { RunQueueService } from './run-queue.service';
 import {
   buildFailurePlaceholderSvg,
   buildRunReport,
@@ -27,9 +28,14 @@ export class TestRunsService {
     private readonly artifactRepository: Repository<Artifact>,
     private readonly runner: PlaywrightRunnerService,
     private readonly storage: ArtifactStorageService,
+    private readonly runQueue: RunQueueService,
   ) {}
 
-  async runTestDefinition(testDefinitionId: string) {
+  /**
+   * Creates a `queued` run and hands execution to the background worker,
+   * returning immediately so the request never blocks on a browser session.
+   */
+  async enqueueRun(testDefinitionId: string) {
     const testDefinition = await this.testDefinitionRepository.findOne({
       where: { id: testDefinitionId },
       relations: { project: true },
@@ -39,14 +45,64 @@ export class TestRunsService {
       throw new NotFoundException('Test definition not found');
     }
 
-    let testRun = await this.testRunRepository.save(
+    const testRun = await this.testRunRepository.save(
       this.testRunRepository.create({
         projectId: testDefinition.projectId,
         testDefinitionId: testDefinition.id,
-        status: 'running',
-        logs: [`Starting test run for "${testDefinition.name}"`],
+        status: 'queued',
+        logs: [`Run queued for "${testDefinition.name}"`],
       }),
     );
+
+    try {
+      await this.runQueue.enqueue(testRun.id);
+    } catch (error) {
+      // If the queue is unreachable, don't leave a run stuck in `queued`
+      // forever (the UI polls pending runs indefinitely). Mark it failed.
+      const message =
+        error instanceof Error ? error.message : 'Failed to enqueue run';
+      testRun.status = 'failed';
+      testRun.errorMessage = `Could not enqueue run: ${message}`;
+      testRun.failureStep = 0;
+      testRun.logs = [...testRun.logs, `Failed to enqueue run: ${message}`];
+      await this.testRunRepository.save(testRun);
+    }
+
+    return this.findOne(testRun.id);
+  }
+
+  /**
+   * Executes a previously-queued run. Invoked by the worker off the request
+   * path: transitions the run to `running`, drives Playwright, and persists the
+   * outcome and artifacts.
+   */
+  async executeRun(runId: string) {
+    let testRun = await this.testRunRepository.findOne({ where: { id: runId } });
+
+    if (!testRun) {
+      throw new NotFoundException('Test run not found');
+    }
+
+    const testDefinition = await this.testDefinitionRepository.findOne({
+      where: { id: testRun.testDefinitionId },
+      relations: { project: true },
+    });
+
+    if (!testDefinition) {
+      testRun.status = 'failed';
+      testRun.errorMessage = 'Test definition not found';
+      testRun.failureStep = 0;
+      testRun.logs = [...testRun.logs, 'Test definition not found'];
+      await this.testRunRepository.save(testRun);
+      return this.findOne(testRun.id);
+    }
+
+    testRun.status = 'running';
+    testRun.logs = [
+      ...testRun.logs,
+      `Starting test run for "${testDefinition.name}"`,
+    ];
+    testRun = await this.testRunRepository.save(testRun);
 
     const startedAt = Date.now();
 
@@ -73,7 +129,7 @@ export class TestRunsService {
 
     const status: TestRunStatus = outcome.status;
     const logs = [
-      `Starting test run for "${testDefinition.name}"`,
+      ...testRun.logs,
       ...outcome.logs,
       status === 'passed'
         ? 'Test run completed successfully'
