@@ -100,10 +100,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(body || `Request failed with ${response.status}`);
+    throw new Error(extractErrorMessage(body) || `Request failed with ${response.status}`);
   }
 
   return response.json() as Promise<T>;
+}
+
+/** Pull the human-readable Nest error message out of a JSON error body. */
+function extractErrorMessage(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { message?: string | string[] };
+    if (Array.isArray(parsed.message)) {
+      return parsed.message.join(', ');
+    }
+    if (typeof parsed.message === 'string') {
+      return parsed.message;
+    }
+  } catch {
+    // Not JSON — fall back to the raw body.
+  }
+  return body;
 }
 
 export const api = {

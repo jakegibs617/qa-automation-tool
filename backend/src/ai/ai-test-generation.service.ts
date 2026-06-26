@@ -37,6 +37,7 @@ const OUTPUT_SCHEMA = {
     startUrl: { type: 'string' },
     steps: {
       type: 'array',
+      maxItems: 40,
       items: {
         type: 'object',
         properties: {
@@ -110,7 +111,7 @@ export class AiTestGenerationService {
         format: { type: 'json_schema', schema: OUTPUT_SCHEMA },
       },
       messages: [{ role: 'user', content: userParts.join('\n') }],
-    } as Anthropic.MessageCreateParamsNonStreaming);
+    });
 
     if (response.stop_reason === 'refusal') {
       throw new UnprocessableEntityException(
