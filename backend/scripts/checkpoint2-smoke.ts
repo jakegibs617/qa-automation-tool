@@ -3,7 +3,6 @@ import {
   supportedStepTypes,
   validateTestStep,
 } from '../src/test-definitions/dto/test-step.dto';
-import { StepDispatcherService } from '../src/test-runs/step-dispatcher.service';
 
 async function main() {
   assert.deepEqual(supportedStepTypes, [
@@ -26,10 +25,6 @@ async function main() {
   );
   assert.equal(validateTestStep({ type: 'fill', selector: '#email' }), false);
   assert.equal(validateTestStep({ type: 'unknown' }), false);
-
-  const dispatcher = new StepDispatcherService();
-  const result = await dispatcher.dispatch({ type: 'goto', url: '/' }, 1);
-  assert.equal(result.log, '1. goto /');
 
   console.log('Checkpoint 2 smoke checks passed');
 }

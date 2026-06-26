@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Artifact } from '../artifacts/artifact.entity';
 import { ArtifactsModule } from '../artifacts/artifacts.module';
 import { TestDefinition } from '../test-definitions/test-definition.entity';
+import { PlaywrightRunnerService } from './playwright-runner.service';
 import { StepDispatcherService } from './step-dispatcher.service';
 import { TestRun } from './test-run.entity';
 import { TestRunsController } from './test-runs.controller';
@@ -14,6 +15,6 @@ import { TestRunsService } from './test-runs.service';
     ArtifactsModule,
   ],
   controllers: [TestRunsController],
-  providers: [StepDispatcherService, TestRunsService],
+  providers: [StepDispatcherService, PlaywrightRunnerService, TestRunsService],
 })
 export class TestRunsModule {}

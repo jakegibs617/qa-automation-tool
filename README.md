@@ -44,7 +44,11 @@ cd backend
 npm run build
 npm run smoke:checkpoint2
 npm run smoke:checkpoint4
+npm run smoke:checkpoint5
 ```
+
+`smoke:checkpoint5` launches a real headless Chromium, so Playwright browsers
+must be installed locally (`npx playwright install chromium`).
 
 ## Frontend app shell
 
