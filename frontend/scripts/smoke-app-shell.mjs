@@ -40,7 +40,7 @@ const server = spawn('npm', ['run', 'start', '--', '-p', port], {
 
 try {
   const html = await waitForServer();
-  const requiredText = ['QA Automation', 'Current project'];
+  const requiredText = ['QA Automation', 'Current project', 'Tutorial'];
   const missing = requiredText.filter((text) => !html.includes(text));
 
   if (missing.length > 0) {
