@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert';
-import { Worker } from 'bullmq';
+import { Queue, Worker } from 'bullmq';
 
 import {
   buildRedisConnection,
@@ -37,6 +37,8 @@ async function main() {
   const processed: Array<{ runId: string; jobName: string }> = [];
   const first = deferred<void>();
   const second = deferred<void>();
+  const smokeRunIds = ['smoke-run-1', 'smoke-run-2'];
+  const cleanupQueue = new Queue<RunJobData>(RUN_QUEUE_NAME, { connection });
 
   const worker = new Worker<RunJobData>(
     RUN_QUEUE_NAME,
@@ -51,6 +53,7 @@ async function main() {
   const queueService = new RunQueueService();
 
   try {
+    await removeSmokeJobs(cleanupQueue, smokeRunIds);
     await worker.waitUntilReady();
 
     // Enqueue via the real service the API uses.
@@ -73,9 +76,22 @@ async function main() {
 
     console.log('Checkpoint 7 smoke checks passed');
   } finally {
+    await removeSmokeJobs(cleanupQueue, smokeRunIds);
+    await cleanupQueue.close();
     await worker.close();
     await queueService.onModuleDestroy();
   }
+}
+
+async function removeSmokeJobs(queue: Queue<RunJobData>, runIds: string[]) {
+  await Promise.all(
+    runIds.map(async (runId) => {
+      const job = await queue.getJob(runId);
+      if (job) {
+        await job.remove();
+      }
+    }),
+  );
 }
 
 main().catch((error) => {
