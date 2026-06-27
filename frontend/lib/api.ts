@@ -87,6 +87,35 @@ export type RunReport = {
   logs: string[];
 };
 
+export type AiProvider = 'anthropic' | 'ollama';
+
+export type AiSettings = {
+  provider: AiProvider;
+  model: string;
+  ollamaBaseUrl: string | null;
+  enabled: boolean;
+  hasAnthropicApiKey: boolean;
+  hasSavedAnthropicApiKey: boolean;
+  usesEnvAnthropicApiKey: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UpdateAiSettingsInput = {
+  provider: AiProvider;
+  model: string;
+  anthropicApiKey?: string | null;
+  ollamaBaseUrl?: string | null;
+  enabled?: boolean;
+};
+
+export type AiConnectionTestResult = {
+  ok: boolean;
+  provider: AiProvider;
+  model: string;
+  message: string;
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -123,6 +152,17 @@ function extractErrorMessage(body: string): string {
 }
 
 export const api = {
+  getAiSettings: () => request<AiSettings>('/ai/settings'),
+  updateAiSettings: (input: UpdateAiSettingsInput) =>
+    request<AiSettings>('/ai/settings', {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  testAiSettings: (input: UpdateAiSettingsInput) =>
+    request<AiConnectionTestResult>('/ai/settings/test', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
   listProjects: () => request<Project[]>('/projects'),
   createProject: (input: { name: string; baseUrl: string }) =>
     request<Project>('/projects', {

@@ -11,9 +11,18 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
-  app.enableCors();
+  app.enableCors({
+    origin: parseCorsOrigins(),
+  });
   await app.listen(4000);
   console.log('Backend listening on http://localhost:4000');
+}
+
+function parseCorsOrigins() {
+  return (process.env.CORS_ORIGIN || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 }
 
 bootstrap();

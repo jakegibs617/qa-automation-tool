@@ -18,9 +18,19 @@ import {
   Plus,
   RefreshCcw,
   Search,
+  Settings,
   Sparkles,
+  Wifi,
 } from 'lucide-react';
-import { api, Project, TestDefinition, TestRun, TestStep } from '@/lib/api';
+import {
+  AiProvider,
+  AiSettings,
+  api,
+  Project,
+  TestDefinition,
+  TestRun,
+  TestStep,
+} from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/status-badge';
 import { TutorialModal } from '@/components/tutorial-modal';
@@ -49,6 +59,8 @@ export default function Home() {
   const [runningDefinitionId, setRunningDefinitionId] = useState<string | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [walkthroughStep, setWalkthroughStep] = useState<number | null>(null);
+  const [aiSettings, setAiSettings] = useState<AiSettings | null>(null);
+  const [aiSettingsState, setAiSettingsState] = useState<LoadState>('idle');
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null;
 
@@ -80,6 +92,19 @@ export default function Home() {
     }
   }
 
+  async function loadAiSettings() {
+    setAiSettingsState('loading');
+
+    try {
+      const result = await api.getAiSettings();
+      setAiSettings(result);
+      setAiSettingsState('ready');
+    } catch (error) {
+      setAiSettingsState('error');
+      setMessage(error instanceof Error ? error.message : 'Unable to load AI settings');
+    }
+  }
+
   async function loadProjectDetail(projectId: string) {
     setDetailState('loading');
     setMessage(null);
@@ -100,6 +125,7 @@ export default function Home() {
 
   useEffect(() => {
     void loadProjects();
+    void loadAiSettings();
   }, []);
 
   useEffect(() => {
@@ -306,6 +332,12 @@ export default function Home() {
                   onCreated={() => loadProjectDetail(selectedProject.id)}
                   onMessage={setMessage}
                 />
+                <AiSettingsPanel
+                  settings={aiSettings}
+                  isLoading={aiSettingsState === 'loading'}
+                  onSaved={(settings) => setAiSettings(settings)}
+                  onMessage={setMessage}
+                />
                 <ProjectSummary project={selectedProject} />
               </div>
             </div>
@@ -341,6 +373,240 @@ export default function Home() {
         onClose={() => setWalkthroughStep(null)}
       />
     </main>
+  );
+}
+
+function AiSettingsPanel({
+  settings,
+  isLoading,
+  onSaved,
+  onMessage,
+}: {
+  settings: AiSettings | null;
+  isLoading: boolean;
+  onSaved: (settings: AiSettings) => void;
+  onMessage: (message: string | null) => void;
+}) {
+  const [provider, setProvider] = useState<AiProvider>('anthropic');
+  const [model, setModel] = useState('claude-opus-4-8');
+  const [anthropicApiKey, setAnthropicApiKey] = useState('');
+  const [ollamaBaseUrl, setOllamaBaseUrl] = useState('http://localhost:11434');
+  const [enabled, setEnabled] = useState(true);
+  const [status, setStatus] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [clearAnthropicKey, setClearAnthropicKey] = useState(false);
+
+  useEffect(() => {
+    if (!settings) {
+      return;
+    }
+
+    setProvider(settings.provider);
+    setModel(settings.model);
+    setOllamaBaseUrl(settings.ollamaBaseUrl ?? 'http://localhost:11434');
+    setEnabled(settings.enabled);
+    setAnthropicApiKey('');
+    setClearAnthropicKey(false);
+  }, [settings]);
+
+  const payload = () => ({
+    provider,
+    model,
+    anthropicApiKey: clearAnthropicKey
+      ? null
+      : anthropicApiKey.trim()
+        ? anthropicApiKey
+        : undefined,
+    ollamaBaseUrl: provider === 'ollama' ? ollamaBaseUrl : undefined,
+    enabled,
+  });
+
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSaving(true);
+    setStatus(null);
+    onMessage(null);
+
+    try {
+      const result = await api.updateAiSettings(payload());
+      setAnthropicApiKey('');
+      setClearAnthropicKey(false);
+      setStatus('AI settings saved.');
+      onSaved(result);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Unable to save AI settings');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleTest() {
+    setIsTesting(true);
+    setStatus(null);
+    onMessage(null);
+
+    try {
+      const result = await api.testAiSettings(payload());
+      setStatus(result.message);
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Unable to test AI settings');
+    } finally {
+      setIsTesting(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSave}
+      className="rounded-md border border-border bg-panel p-4 shadow-panel"
+    >
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Settings className="h-4 w-4 text-accent" aria-hidden="true" />
+          <h3 className="text-sm font-semibold">AI provider</h3>
+        </div>
+        {isLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
+      </div>
+
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2 rounded-md border border-border bg-background p-1">
+          {(['anthropic', 'ollama'] as AiProvider[]).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                setProvider(option);
+                setModel(option === 'ollama' ? 'llama3.1' : 'claude-opus-4-8');
+                setClearAnthropicKey(false);
+              }}
+              className={cn(
+                'h-8 rounded text-xs font-medium capitalize transition',
+                provider === option
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+              )}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-muted-foreground">Model</span>
+          <input
+            value={model}
+            onChange={(event) => setModel(event.target.value)}
+            className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+            placeholder={provider === 'ollama' ? 'llama3.1' : 'claude-opus-4-8'}
+            required
+          />
+        </label>
+
+        {provider === 'anthropic' ? (
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">
+              API key
+            </span>
+            <input
+              value={anthropicApiKey}
+              onChange={(event) => {
+                setAnthropicApiKey(event.target.value);
+                if (event.target.value.trim()) {
+                  setClearAnthropicKey(false);
+                }
+              }}
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+              placeholder={
+                settings?.hasAnthropicApiKey
+                  ? settings.usesEnvAnthropicApiKey
+                    ? 'Using backend environment key'
+                    : 'Saved key configured'
+                  : 'sk-ant-...'
+              }
+              type="password"
+              autoComplete="off"
+              disabled={clearAnthropicKey}
+            />
+          </label>
+        ) : (
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">
+              Ollama URL
+            </span>
+            <input
+              value={ollamaBaseUrl}
+              onChange={(event) => setOllamaBaseUrl(event.target.value)}
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+              placeholder="http://localhost:11434"
+              type="url"
+              required
+            />
+          </label>
+        )}
+
+        <label className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm">
+          <span>Enabled</span>
+          <input
+            checked={enabled}
+            onChange={(event) => setEnabled(event.target.checked)}
+            type="checkbox"
+            className="h-4 w-4 accent-[hsl(var(--accent))]"
+          />
+        </label>
+
+        {provider === 'anthropic' && settings?.hasSavedAnthropicApiKey ? (
+          <label className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm">
+            <span>Clear saved key</span>
+            <input
+              checked={clearAnthropicKey}
+              onChange={(event) => {
+                setClearAnthropicKey(event.target.checked);
+                if (event.target.checked) {
+                  setAnthropicApiKey('');
+                }
+              }}
+              type="checkbox"
+              className="h-4 w-4 accent-[hsl(var(--accent))]"
+            />
+          </label>
+        ) : null}
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={handleTest}
+            disabled={isTesting || isSaving}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 text-xs font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isTesting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Wifi className="h-3.5 w-3.5" />
+            )}
+            Test
+          </button>
+          <button
+            type="submit"
+            disabled={isSaving || isTesting}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-accent px-3 text-xs font-medium text-accent-foreground disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Check className="h-3.5 w-3.5" />
+            )}
+            Save
+          </button>
+        </div>
+
+        {status ? (
+          <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+            {status}
+          </p>
+        ) : null}
+      </div>
+    </form>
   );
 }
 

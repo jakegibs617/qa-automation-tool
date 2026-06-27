@@ -2,17 +2,21 @@ import {
   Inject,
   Injectable,
   Logger,
+  BadRequestException,
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import type Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '@anthropic-ai/sdk';
+import { AiSettingsService, EffectiveAiSettings } from './ai-settings.service';
 import {
   supportedStepTypes,
   TestStepDto,
   validateTestStep,
 } from '../test-definitions/dto/test-step.dto';
 
-export const ANTHROPIC_CLIENT = 'ANTHROPIC_CLIENT';
+export const ANTHROPIC_FACTORY = 'ANTHROPIC_FACTORY';
+
+export type AnthropicFactory = (apiKey: string) => Anthropic;
 
 export type GenerateStepsInput = {
   prompt: string;
@@ -25,8 +29,6 @@ export type GeneratedTest = {
   startUrl: string;
   steps: TestStepDto[];
 };
-
-const DEFAULT_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-opus-4-8';
 
 // JSON-schema-constrained output: the model must return exactly this shape.
 // Per-type field requirements are enforced afterwards by validateTestStep.
@@ -76,41 +78,89 @@ Each step has a "type" and only the fields that type needs:
 Selector guidance — prefer resilient selectors in this order: data-testid, aria-label, role, visible text, then CSS. Avoid brittle deep CSS/XPath. Do not invent steps the request does not imply. Keep the test minimal and focused on what was asked.`;
 
 /**
- * Generates structured test steps from a natural-language prompt using Claude.
- * The client is injected (null when ANTHROPIC_API_KEY is unset) so the app
- * boots without a key; generation then fails with a clear, actionable error.
+ * Generates structured test steps from a natural-language prompt using the
+ * runtime-configured AI provider.
  */
 @Injectable()
 export class AiTestGenerationService {
   private readonly logger = new Logger(AiTestGenerationService.name);
 
   constructor(
-    @Inject(ANTHROPIC_CLIENT) private readonly anthropic: Anthropic | null,
+    private readonly settingsService: AiSettingsService,
+    @Inject(ANTHROPIC_FACTORY) private readonly anthropicFactory: AnthropicFactory,
   ) {}
 
-  isConfigured(): boolean {
-    return this.anthropic !== null;
+  async isConfigured(): Promise<boolean> {
+    const settings = await this.settingsService.getEffectiveSettings();
+    return settings.enabled && this.hasProviderConfiguration(settings);
   }
 
   async generate(input: GenerateStepsInput): Promise<GeneratedTest> {
-    if (!this.anthropic) {
+    return this.generateWithSettings(input, await this.settingsService.getEffectiveSettings());
+  }
+
+  async testConnection(settings: EffectiveAiSettings) {
+    await this.generateWithSettings(
+      {
+        prompt: 'Create one minimal test that opens the home page and verifies the body is visible.',
+        startUrl: '/',
+      },
+      settings,
+    );
+
+    return {
+      ok: true,
+      provider: settings.provider,
+      model: settings.model,
+      message: `${settings.provider} responded with valid test steps.`,
+    };
+  }
+
+  private async generateWithSettings(
+    input: GenerateStepsInput,
+    settings: EffectiveAiSettings,
+  ): Promise<GeneratedTest> {
+    if (!settings.enabled) {
       throw new ServiceUnavailableException(
-        'AI test generation is not configured. Set ANTHROPIC_API_KEY in the backend environment.',
+        'AI test generation is disabled in AI settings.',
       );
     }
 
     const userParts = [`Request: ${input.prompt}`];
     if (input.startUrl) userParts.push(`Start URL: ${input.startUrl}`);
     if (input.baseUrl) userParts.push(`Base URL of the site under test: ${input.baseUrl}`);
+    const userPrompt = userParts.join('\n');
 
-    const response = await this.anthropic.messages.create({
-      model: DEFAULT_MODEL,
+    if (settings.provider === 'anthropic') {
+      return this.generateWithAnthropic(settings, userPrompt, input);
+    }
+    if (settings.provider === 'ollama') {
+      return this.generateWithOllama(settings, userPrompt, input);
+    }
+
+    throw new BadRequestException('Unsupported AI provider selected.');
+  }
+
+  private async generateWithAnthropic(
+    settings: EffectiveAiSettings,
+    userPrompt: string,
+    input: GenerateStepsInput,
+  ): Promise<GeneratedTest> {
+    if (!settings.anthropicApiKey) {
+      throw new ServiceUnavailableException(
+        'Anthropic is not configured. Save an Anthropic API key in AI settings.',
+      );
+    }
+
+    const anthropic = this.anthropicFactory(settings.anthropicApiKey);
+    const response = await anthropic.messages.create({
+      model: settings.model,
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
       output_config: {
         format: { type: 'json_schema', schema: OUTPUT_SCHEMA },
       },
-      messages: [{ role: 'user', content: userParts.join('\n') }],
+      messages: [{ role: 'user', content: userPrompt }],
     });
 
     if (response.stop_reason === 'refusal') {
@@ -130,6 +180,65 @@ export class AiTestGenerationService {
     return this.parseAndValidate(text, input);
   }
 
+  private async generateWithOllama(
+    settings: EffectiveAiSettings,
+    userPrompt: string,
+    input: GenerateStepsInput,
+  ): Promise<GeneratedTest> {
+    let response: Response;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+    try {
+      response = await fetch(`${settings.ollamaBaseUrl.replace(/\/+$/, '')}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: settings.model,
+          system: SYSTEM_PROMPT,
+          prompt: userPrompt,
+          stream: false,
+          format: OUTPUT_SCHEMA,
+        }),
+      });
+    } catch {
+      throw new ServiceUnavailableException(
+        `Unable to reach Ollama at ${settings.ollamaBaseUrl}. Confirm Ollama is running and the base URL is correct.`,
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch {
+      throw new ServiceUnavailableException('Ollama returned a non-JSON response.');
+    }
+
+    const record = body as Record<string, unknown>;
+    if (!response.ok || typeof record.error === 'string') {
+      const detail = typeof record.error === 'string' ? ` ${record.error}` : '';
+      throw new ServiceUnavailableException(`Ollama generation failed.${detail}`);
+    }
+
+    if (typeof record.response !== 'string' || record.response.trim().length === 0) {
+      throw new UnprocessableEntityException('Ollama returned no usable output.');
+    }
+
+    return this.parseAndValidate(record.response, input);
+  }
+
+  private hasProviderConfiguration(settings: EffectiveAiSettings) {
+    if (settings.provider === 'anthropic') {
+      return Boolean(settings.anthropicApiKey);
+    }
+    if (settings.provider === 'ollama') {
+      return Boolean(settings.ollamaBaseUrl && settings.model);
+    }
+    return false;
+  }
+
   private parseAndValidate(text: string, input: GenerateStepsInput): GeneratedTest {
     let parsed: unknown;
     try {
@@ -145,9 +254,12 @@ export class AiTestGenerationService {
     const record = parsed as Record<string, unknown>;
     const rawSteps = Array.isArray(record.steps) ? record.steps : [];
 
-    // Keep only steps that satisfy the runner's own per-type rules; a model
-    // slip on one step shouldn't poison the whole generation.
-    const steps = rawSteps.filter(validateTestStep);
+    // Keep only steps that satisfy the runner's own per-type rules and, when a
+    // project base URL is available, do not navigate outside that origin.
+    const steps = rawSteps.filter(
+      (step): step is TestStepDto =>
+        validateTestStep(step) && this.isStepScopedToBaseUrl(step, input.baseUrl),
+    );
     if (steps.length === 0) {
       throw new UnprocessableEntityException(
         'The model did not produce any valid test steps. Try rephrasing the request.',
@@ -165,9 +277,44 @@ export class AiTestGenerationService {
         : 'Generated test';
     const startUrl =
       typeof record.startUrl === 'string' && record.startUrl.trim().length > 0
-        ? record.startUrl.trim()
+        ? this.safeGeneratedUrl(record.startUrl.trim(), input.baseUrl) ??
+          input.startUrl ??
+          '/'
         : input.startUrl ?? '/';
 
     return { name, startUrl, steps };
+  }
+
+  private isStepScopedToBaseUrl(step: TestStepDto, baseUrl: string | undefined) {
+    if ((step.type !== 'goto' && step.type !== 'assertUrl') || !step.url) {
+      return true;
+    }
+
+    return this.safeGeneratedUrl(step.url, baseUrl) !== null;
+  }
+
+  private safeGeneratedUrl(value: string, baseUrl: string | undefined) {
+    if (!baseUrl) {
+      return value;
+    }
+
+    const projectOrigin = parseOrigin(baseUrl);
+    if (!projectOrigin || !looksAbsoluteUrl(value)) {
+      return value;
+    }
+
+    return parseOrigin(value) === projectOrigin ? value : null;
+  }
+}
+
+function looksAbsoluteUrl(value: string) {
+  return /^[a-z][a-z\d+\-.]*:\/\//i.test(value);
+}
+
+function parseOrigin(value: string) {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
   }
 }

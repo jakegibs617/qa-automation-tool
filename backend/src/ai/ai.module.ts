@@ -1,21 +1,26 @@
 import { Module } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AiSettings } from './ai-settings.entity';
+import { AiSettingsService } from './ai-settings.service';
+import { IsAllowedOllamaBaseUrlConstraint } from './ai-settings.dto';
 import { AiController } from './ai.controller';
 import {
-  ANTHROPIC_CLIENT,
+  ANTHROPIC_FACTORY,
+  AnthropicFactory,
   AiTestGenerationService,
 } from './ai-test-generation.service';
 
 @Module({
+  imports: [TypeOrmModule.forFeature([AiSettings])],
   controllers: [AiController],
   providers: [
     {
-      // Null when ANTHROPIC_API_KEY is unset, so the app boots without a key;
-      // the service surfaces a clear error at generation time instead.
-      provide: ANTHROPIC_CLIENT,
-      useFactory: (): Anthropic | null =>
-        process.env.ANTHROPIC_API_KEY ? new Anthropic() : null,
+      provide: ANTHROPIC_FACTORY,
+      useFactory: (): AnthropicFactory => (apiKey: string) => new Anthropic({ apiKey }),
     },
+    IsAllowedOllamaBaseUrlConstraint,
+    AiSettingsService,
     AiTestGenerationService,
   ],
 })
