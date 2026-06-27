@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>QA Recorder</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <strong>QA Recorder</strong>
+        <span id="status">Idle</span>
+      </header>
+      <div class="controls">
+        <button id="start" type="button">Start</button>
+        <button id="stop" type="button">Stop</button>
+        <button id="clear" type="button">Clear</button>
+      </div>
+      <textarea id="output" spellcheck="false"></textarea>
+      <button id="copy" type="button">Copy JSON</button>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

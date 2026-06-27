@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/status-badge';
 import { TutorialModal } from '@/components/tutorial-modal';
 import { TutorialWalkthrough } from '@/components/tutorial-walkthrough';
+import { recordingToTestDefinition } from '@/recorder-extension/recorder-core';
 
 const starterSteps = JSON.stringify(
   [
@@ -692,6 +693,7 @@ function TestDefinitionForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [recordingJson, setRecordingJson] = useState('');
 
   async function handleGenerate() {
     if (!prompt.trim()) {
@@ -753,6 +755,20 @@ function TestDefinitionForm({
     }
   }
 
+  function handleImportRecording() {
+    onMessage(null);
+
+    try {
+      const imported = recordingToTestDefinition(JSON.parse(recordingJson));
+      setName(imported.name);
+      setStartUrl(imported.startUrl);
+      setSteps(JSON.stringify(imported.steps, null, 2));
+      setRecordingJson('');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'Unable to import recording');
+    }
+  }
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -795,6 +811,27 @@ function TestDefinitionForm({
         </p>
       </div>
       <div className="space-y-3">
+        <div className="rounded-md border border-border bg-background p-3">
+          <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <ClipboardList className="h-3.5 w-3.5" aria-hidden="true" />
+            Recorder JSON
+          </div>
+          <textarea
+            value={recordingJson}
+            onChange={(event) => setRecordingJson(event.target.value)}
+            className="min-h-[86px] w-full resize-y rounded-md border border-border bg-panel px-3 py-2 font-mono text-xs leading-5"
+            spellCheck={false}
+          />
+          <button
+            type="button"
+            onClick={handleImportRecording}
+            disabled={!recordingJson.trim()}
+            className="mt-2 inline-flex h-8 w-full items-center justify-center gap-2 rounded-md border border-border bg-panel px-3 text-xs font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <FileJson className="h-3.5 w-3.5" />
+            Import recording
+          </button>
+        </div>
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
