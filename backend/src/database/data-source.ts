@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { Artifact } from '../artifacts/artifact.entity';
+import { AiSettings } from '../ai/ai-settings.entity';
 import { Project } from '../projects/project.entity';
 import { TestDefinition } from '../test-definitions/test-definition.entity';
 import { TestRun } from '../test-runs/test-run.entity';
@@ -20,7 +21,7 @@ export const dataSourceOptions: DataSourceOptions = {
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'qa_automation',
-  entities: [Project, TestDefinition, TestRun, Artifact],
+  entities: [Project, TestDefinition, TestRun, Artifact, AiSettings],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: parseBoolean(process.env.DB_SYNCHRONIZE),
   migrationsRun: parseBoolean(process.env.DB_MIGRATIONS_RUN),
