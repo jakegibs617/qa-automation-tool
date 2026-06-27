@@ -35,6 +35,17 @@ export class RunQueueService implements OnModuleDestroy {
     this.logger.log(`Enqueued run ${runId}`);
   }
 
+  async getRunJobState(
+    runId: string,
+  ): Promise<'active' | 'waiting' | 'delayed' | 'failed' | 'completed' | 'missing' | string> {
+    const job = await this.queue.getJob(runId);
+    if (!job) {
+      return 'missing';
+    }
+
+    return job.getState();
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.queue.close();
   }
