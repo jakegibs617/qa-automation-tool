@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Artifact } from '../artifacts/artifact.entity';
 import { ArtifactStorageService } from '../artifacts/artifact-storage.service';
 import { TestDefinition } from '../test-definitions/test-definition.entity';
@@ -171,6 +171,47 @@ export class TestRunsService {
     return this.findOne(testRun.id);
   }
 
+  async reconcilePendingRuns() {
+    const pendingRuns = await this.testRunRepository.find({
+      where: { status: In(['queued', 'running']) },
+    });
+
+    const results = { runningFailed: 0, queuedFailed: 0 };
+
+    for (const run of pendingRuns) {
+      if (run.status === 'running') {
+        await this.markRunFailed(
+          run,
+          'Run interrupted by worker restart',
+          'Run interrupted by worker restart',
+        );
+        results.runningFailed += 1;
+        continue;
+      }
+
+      const state = await this.runQueue.getRunJobState(run.id);
+      if (['missing', 'failed', 'completed', 'unknown'].includes(state)) {
+        await this.markRunFailed(
+          run,
+          `Queued run lost its worker job (${state})`,
+          `Queued run could not be recovered because its queue job is ${state}`,
+        );
+        results.queuedFailed += 1;
+      }
+    }
+
+    return results;
+  }
+
+  async markRunInterrupted(runId: string, reason: string) {
+    const testRun = await this.testRunRepository.findOne({ where: { id: runId } });
+    if (!testRun || isTerminalStatus(testRun.status)) {
+      return testRun;
+    }
+
+    return this.markRunFailed(testRun, reason, reason);
+  }
+
   findByProject(projectId: string) {
     return this.testRunRepository.find({
       where: { projectId },
@@ -266,4 +307,20 @@ export class TestRunsService {
       }),
     );
   }
+
+  private async markRunFailed(
+    testRun: TestRun,
+    errorMessage: string,
+    logMessage: string,
+  ) {
+    testRun.status = 'failed';
+    testRun.failureStep = testRun.failureStep ?? 0;
+    testRun.errorMessage = errorMessage;
+    testRun.logs = [...(testRun.logs ?? []), logMessage];
+    return this.testRunRepository.save(testRun);
+  }
+}
+
+function isTerminalStatus(status: TestRunStatus) {
+  return ['passed', 'failed', 'canceled'].includes(status);
 }

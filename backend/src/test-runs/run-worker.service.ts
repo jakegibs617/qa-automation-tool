@@ -24,8 +24,15 @@ export class RunWorkerService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private readonly testRunsService: TestRunsService) {}
 
-  onModuleInit(): void {
+  async onModuleInit(): Promise<void> {
     const concurrency = Number(process.env.RUN_WORKER_CONCURRENCY ?? 1);
+
+    const reconciled = await this.testRunsService.reconcilePendingRuns();
+    if (reconciled.runningFailed > 0 || reconciled.queuedFailed > 0) {
+      this.logger.warn(
+        `Reconciled pending runs on worker startup: ${reconciled.runningFailed} running, ${reconciled.queuedFailed} queued marked failed`,
+      );
+    }
 
     this.worker = new Worker<RunJobData>(
       RUN_QUEUE_NAME,
@@ -39,6 +46,20 @@ export class RunWorkerService implements OnModuleInit, OnModuleDestroy {
     this.worker.on('failed', (job, error) => {
       this.logger.error(
         `Run job ${job?.data.runId ?? job?.id} failed: ${error.message}`,
+      );
+      if (job?.data.runId) {
+        void this.testRunsService.markRunInterrupted(
+          job.data.runId,
+          `Run worker job failed: ${error.message}`,
+        );
+      }
+    });
+
+    this.worker.on('stalled', (jobId) => {
+      this.logger.error(`Run job ${jobId} stalled`);
+      void this.testRunsService.markRunInterrupted(
+        String(jobId),
+        'Run worker job stalled',
       );
     });
   }

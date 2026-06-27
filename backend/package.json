@@ -11,6 +11,7 @@
     "smoke:checkpoint4": "ts-node scripts/checkpoint4-smoke.ts",
     "smoke:checkpoint5": "ts-node scripts/checkpoint5-smoke.ts",
     "smoke:checkpoint7": "ts-node scripts/checkpoint7-smoke.ts",
+    "smoke:checkpoint9": "ts-node scripts/checkpoint9-smoke.ts",
     "start": "node dist/main.js",
     "typeorm": "typeorm-ts-node-commonjs -d src/database/data-source.ts",
     "migration:run": "npm run typeorm -- migration:run",

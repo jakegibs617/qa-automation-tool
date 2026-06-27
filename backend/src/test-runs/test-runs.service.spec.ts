@@ -15,7 +15,7 @@ const buildQueuedRun = () => ({
   id: 'run-1',
   projectId: 'proj-1',
   testDefinitionId: 'def-1',
-  status: 'queued' as const,
+  status: 'queued' as 'queued' | 'running' | 'passed' | 'failed' | 'canceled',
   logs: ['Run queued for "Login flow"'],
 });
 
@@ -99,7 +99,10 @@ const setup = (options: SetupOptions = {}) => {
 
   const runner = { run: jest.fn() };
   const storage = { write: jest.fn(async () => 1234) };
-  const runQueue = { enqueue: jest.fn(async () => undefined) };
+  const runQueue = {
+    enqueue: jest.fn(async () => undefined),
+    getRunJobState: jest.fn(async () => 'waiting'),
+  };
 
   const service = new TestRunsService(
     testRunRepository as never,
@@ -298,5 +301,82 @@ describe('TestRunsService.findOne', () => {
     const { service, testRunRepository } = setup();
     testRunRepository.findOne.mockResolvedValueOnce(null as never);
     await expect(service.findOne('missing')).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
+describe('TestRunsService.reconcilePendingRuns', () => {
+  it('marks running runs failed on startup', async () => {
+    const runningRun = { ...buildQueuedRun(), id: 'run-running', status: 'running' as const };
+    const { service, testRunRepository, runQueue } = setup();
+    testRunRepository.find.mockResolvedValueOnce([runningRun] as never);
+
+    const result = await service.reconcilePendingRuns();
+
+    expect(result).toEqual({ runningFailed: 1, queuedFailed: 0 });
+    expect(runQueue.getRunJobState).not.toHaveBeenCalled();
+    const savedRun = testRunRepository.save.mock.calls.at(-1)![0];
+    expect(savedRun.status).toBe('failed');
+    expect(savedRun.errorMessage).toBe('Run interrupted by worker restart');
+    expect(savedRun.logs).toContain('Run interrupted by worker restart');
+  });
+
+  it('marks queued runs failed when the queue job cannot be recovered', async () => {
+    const queuedRun = { ...buildQueuedRun(), id: 'run-missing' };
+    const { service, testRunRepository, runQueue } = setup();
+    testRunRepository.find.mockResolvedValueOnce([queuedRun] as never);
+    runQueue.getRunJobState.mockResolvedValueOnce('missing');
+
+    const result = await service.reconcilePendingRuns();
+
+    expect(result).toEqual({ runningFailed: 0, queuedFailed: 1 });
+    expect(runQueue.getRunJobState).toHaveBeenCalledWith('run-missing');
+    const savedRun = testRunRepository.save.mock.calls.at(-1)![0];
+    expect(savedRun.status).toBe('failed');
+    expect(savedRun.errorMessage).toBe('Queued run lost its worker job (missing)');
+  });
+
+  it('keeps queued runs when the queue job is still waiting or active', async () => {
+    const waitingRun = { ...buildQueuedRun(), id: 'run-waiting' };
+    const activeRun = { ...buildQueuedRun(), id: 'run-active' };
+    const { service, testRunRepository, runQueue } = setup();
+    testRunRepository.find.mockResolvedValueOnce([waitingRun, activeRun] as never);
+    runQueue.getRunJobState
+      .mockResolvedValueOnce('waiting')
+      .mockResolvedValueOnce('active');
+
+    const result = await service.reconcilePendingRuns();
+
+    expect(result).toEqual({ runningFailed: 0, queuedFailed: 0 });
+    expect(testRunRepository.save).not.toHaveBeenCalled();
+  });
+});
+
+describe('TestRunsService.markRunInterrupted', () => {
+  it('marks a pending run failed with the supplied reason', async () => {
+    const { service, testRunRepository } = setup();
+    testRunRepository.findOne.mockResolvedValueOnce({
+      ...buildQueuedRun(),
+      id: 'run-1',
+      status: 'running',
+    } as never);
+
+    await service.markRunInterrupted('run-1', 'Run worker job stalled');
+
+    const savedRun = testRunRepository.save.mock.calls.at(-1)![0];
+    expect(savedRun.status).toBe('failed');
+    expect(savedRun.errorMessage).toBe('Run worker job stalled');
+  });
+
+  it('does not overwrite terminal runs', async () => {
+    const { service, testRunRepository } = setup();
+    testRunRepository.findOne.mockResolvedValueOnce({
+      ...buildQueuedRun(),
+      id: 'run-1',
+      status: 'passed',
+    } as never);
+
+    await service.markRunInterrupted('run-1', 'late worker failure');
+
+    expect(testRunRepository.save).not.toHaveBeenCalled();
   });
 });
