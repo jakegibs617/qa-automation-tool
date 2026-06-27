@@ -1,77 +1,45 @@
 # Agent Handoff
 
 ## Current Repo State
-- Latest commit on `main` is the merge of PR #5 (`checkpoint/07-async-runs`). Checkpoints 1–7 are implemented and merged. `main` is clean and up to date with `origin/main`.
-- NestJS backend in `backend/` listens on `http://localhost:4000`. Next.js frontend in `frontend/` listens on `http://localhost:3000`.
-- `docker-compose.yml` provides PostgreSQL (host port `55432`) and Redis (host port `6379`). Start both with `docker compose up -d`.
-- Run execution is now **asynchronous**: the run endpoint enqueues a BullMQ job and returns a `queued` run immediately; a background worker drives `queued` → `running` → `passed`/`failed`.
-- `progress.md` tracks all checkpoints. `plan.md` defines the broader MVP. A Graphify run exists in `graphify-out/`.
+- `main` has checkpoints 1–8 merged and is clean/up to date with origin. Latest merged milestone: **Checkpoint 8 — AI test generation** (PR #8).
+- **Checkpoint 9 — browser recorder extension is on branch `checkpoint/09-recorder-extension` and open as PR #9. It is implemented and unit-tested but NOT yet reviewed or merged.** That review + merge is the next agent's first task.
+- NestJS backend in `backend/` (`http://localhost:4000`); Next.js frontend in `frontend/` (`http://localhost:3000`); new `extension/` holds the recorder Chrome extension.
+- `docker-compose.yml` provides PostgreSQL (host `55432`) and Redis (host `6379`). `docker compose up -d`. These were left running.
+- Runs execute asynchronously (BullMQ worker, checkpoint 7). `plan.md` has an "Active Priorities" section: AI generation (done) and the recorder (PR #9).
 
 ## Completed in Latest Session
-- **Completed milestone:** Checkpoint 7 — async run execution (move runs off the request path).
-- **PR:** #5 (`checkpoint/07-async-runs`), squash/merge-committed to `main`.
-- **Merged into main:** yes.
-- **Tests run:**
-  - `cd backend && npm run build` (clean; no spec files leak into `dist/`)
-  - `cd backend && npm test` (46 Jest tests pass)
-  - `docker compose up -d redis && cd backend && npm run smoke:checkpoint7` (queue/worker round-trip vs real Redis)
-  - `cd backend && npm run smoke:checkpoint2 && npm run smoke:checkpoint4 && npm run smoke:checkpoint5`
-  - `cd frontend && npm run lint && npm run build`
-  - Full-stack async flow vs local Postgres + Redis: trigger returned `202`/`queued`; polling observed `running` → `passed` (only `report.json`); a failing definition produced `running` → `failed` with a real `failure.png` + `trace.zip`.
-- **Important implementation notes:**
-  - New files: `backend/src/test-runs/run-queue.ts` (shared `RUN_QUEUE_NAME`/`RUN_JOB_NAME` + `buildRedisConnection`, which sets `maxRetriesPerRequest: null` and optional `REDIS_PASSWORD`), `run-queue.service.ts` (`RunQueueService.enqueue`), `run-worker.service.ts` (`RunWorkerService` — a BullMQ `Worker` started in `onModuleInit`, closed in `onModuleDestroy`, concurrency from `RUN_WORKER_CONCURRENCY`, default 1).
-  - `TestRunsService` split: `enqueueRun(testDefinitionId)` creates a `queued` run, enqueues it, and returns immediately (marks the run `failed` if enqueue throws so it isn't stuck `queued`); `executeRun(runId)` is worker-driven — loads the run + definition, transitions to `running`, drives Playwright, and persists the outcome/artifacts (same artifact logic as before).
-  - Controller `POST /test-definitions/:id/runs` now returns `202 Accepted` and calls `enqueueRun`. `RunQueueService`/`RunWorkerService` registered in `TestRunsModule`.
-  - Frontend polls every 1.5s while a run is `queued`/`running`: run-detail route (`frontend/app/runs/[runId]/page.tsx`) and dashboard run history (`frontend/app/page.tsx`).
-  - `.env.example` gained `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `RUN_WORKER_CONCURRENCY`.
-- **Known limitations / follow-up items:**
-  - **Stuck-`running` recovery:** if the worker process dies mid-`executeRun`, the DB row stays `running` and the UI polls it indefinitely. Needs BullMQ stalled-event handling + a reconciliation sweep that marks orphaned runs `failed` on boot. (Raised in review; deferred as its own unit of work.)
-  - **Cancel/retry:** the `canceled` status exists on the enum but there is no cancel endpoint; BullMQ `attempts`/`backoff` retries are not configured. `jobId: runId` dedupes but there's no idempotency flow yet.
-  - Pre-existing: `npm audit --omit=dev --audit-level=high` still reports production advisories needing major Nest/tooling upgrades — out of scope.
+- **Checkpoint 7 — async run execution** (PR #5), **handoff doc** (PR #6), **onboarding tutorial** (PR #7): all merged.
+- **Checkpoint 8 — AI test generation** (PR #8, merged): `POST /ai/generate-steps` turns a natural-language prompt into structured steps via Claude (`@anthropic-ai/sdk`, model `claude-opus-4-8`, `output_config` JSON-schema), validated with the runner's own `validateTestStep`. The Anthropic client is injected and `null` when `ANTHROPIC_API_KEY` is unset, so the app boots without a key and the endpoint returns **503** with a clear message. Frontend "Generate steps with AI" panel fills the definition form for review/edit; tutorial gained an AI step. 55 backend tests pass.
+- **Checkpoint 9 — recorder extension (PR #9, pending review/merge):** MV3 Chrome extension in `extension/` that records clicks/input/navigation/`<select>` as test steps with resilient selectors (`data-testid → aria-label → role+name → text → CSS`), Playwright-compatible. Core logic in `recorder.js` (shared by the content script and tests); `content.js`/`background.js`/`popup.*`; 15 Jest+jsdom tests pass (`cd extension && npm test`); `extension/README.md` has load/usage instructions.
 
-## Next Milestone: Worker resilience — recover orphaned `running`/`queued` runs
-Make the async run lifecycle crash-safe so a worker restart never leaves a run stuck in a non-terminal state.
+## Important Notes / Known Limitations
+- **No `ANTHROPIC_API_KEY` is set in this environment.** The AI feature is exercised only by mocked unit tests; to demo it live, put a key in `backend/.env` and restart the backend.
+- The recorder is a standalone extension: it exports JSON the user pastes into the definition form. It is not yet surfaced in the web app UI, and there is no in-app "import recording" path.
+- Open follow-ups from earlier: worker resilience (recover runs orphaned in `running`/`queued` if the worker crashes); a cancel/retry endpoint (the `canceled` status exists but is unwired); `npm audit` production advisories needing major Nest/tooling upgrades.
 
-Scope:
-- On worker startup (or via a small reconciliation service), find runs left in `running` (and `queued` jobs no longer on the queue) and mark them `failed` with a clear `errorMessage` (e.g. "Run interrupted by worker restart").
-- Wire BullMQ stalled-job handling: configure `stalledInterval`/`maxStalledCount` and a `failed`/`stalled` handler in `RunWorkerService` that transitions the corresponding DB run to `failed`.
-- Add focused unit tests (reconciliation marks orphaned runs failed; stalled handler transitions a run) and extend `smoke:checkpoint7` (or add `smoke:checkpoint8`) to cover a simulated interrupted run.
-- Keep `npm` as the package manager; keep changes scoped — do not start the cancel endpoint or retries (that's a later milestone).
+## Next Milestone (do this first)
+**Land the recorder, then make it demoable.**
+1. Review and merge **PR #9** (`checkpoint/09-recorder-extension`). Spawn a review subagent per the workflow; address feedback; merge.
+2. Surface the recorder in the app for discoverability — e.g. a one-line hint/link near the definition form's steps field, and a corresponding tutorial step (`data-tutorial` target) so the in-app tutorial stays in sync with shipped features.
+3. (Optional, higher value) add an "import recorded steps" affordance so a recording can be pulled into the form without manual copy/paste.
 
-## Notes for the Next Agent
-- Use NestJS + TypeORM in `backend/`; keep `npm`. Backend defaults in `backend/.env.example`.
-- Start infra: `docker compose up -d` (Postgres on `55432`, Redis on `6379`). Run migrations: `cd backend && npm run migration:run`. Start backend: `cd backend && npm run dev`. Start frontend: `cd frontend && npm run dev`.
-- The Playwright runner needs browsers installed locally (`npx playwright install chromium`); they were present in the dev environment used for Checkpoint 7.
-- The frontend uses `NEXT_PUBLIC_API_URL` (default `http://localhost:4000`); Next.js 16 / React 19 / Tailwind / lucide. Keep it a practical QA operations shell.
-- Backend tests are Jest (`npm test`); smoke scripts are `smoke:checkpoint{2,4,5,7}`. `checkpoint7` requires Redis.
+Then, with `ANTHROPIC_API_KEY` set, do an **MVP demo pass**: prompt → generate steps → review → run (async) → view artifacts; and record a flow with the extension → paste → run.
+
+## Setup quick reference
+- `docker compose up -d` (Postgres 55432, Redis 6379) · `cd backend && npm run migration:run`.
+- Backend: `cd backend && npm run dev`. Frontend: `cd frontend && npm run dev`.
+- Tests: backend `cd backend && npm test`; extension `cd extension && npm install && npm test`. Backend smokes: `smoke:checkpoint{2,4,5,7}` (checkpoint7 needs Redis).
+- Playwright browsers must be installed locally (`npx playwright install chromium`).
 
 ## Prompt for Next Agent
 
-You are continuing this project from the current `main` branch.
+You are continuing this project from the current `main` branch (checkpoints 1–8 merged). Read this handoff, `plan.md` (Active Priorities), `progress.md`, and the test suites.
 
-Start by reading this handoff document, `progress.md`, the README, and the test suite.
+Your task:
+1. Review and **merge PR #9** (`checkpoint/09-recorder-extension`, the Phase 2 browser recorder). Spawn a review subagent that posts its review to the PR, address required feedback, then merge.
+2. Make the recorder discoverable in the app: add a brief pointer near the test-definition steps field and a matching tutorial step (keep the in-app tutorial in sync — it lives in `frontend/components/tutorial-modal.tsx` + `tutorial-walkthrough.tsx`, targets via `data-tutorial`).
+3. Verify: `cd extension && npm test`, `cd backend && npm test`, `cd frontend && npm run lint && npm run build`.
 
-Your task is to implement the next milestone:
+Then prepare the MVP demo (note: set `ANTHROPIC_API_KEY` in `backend/.env` to exercise AI generation live).
 
-**Worker resilience — recover orphaned `running`/`queued` runs**
-
-Scope:
-- On worker startup (or a reconciliation service), mark runs stuck in `running` (and `queued` jobs missing from the queue) as `failed` with a clear `errorMessage`.
-- Wire BullMQ stalled-job handling in `RunWorkerService` so a stalled job transitions its DB run to `failed`.
-- Add unit tests for reconciliation + stalled handling, and a smoke check for a simulated interrupted run.
-
-Do not work beyond this milestone (no cancel endpoint, no retry/backoff — those are later).
-
-Before coding:
-1. Summarize your understanding of the milestone.
-2. Identify expected files to change.
-3. Describe the test plan.
-
-During implementation:
-1. Add or update unit tests.
-2. Run focused tests, then the full Jest suite + smokes (`docker compose up -d redis` first).
-3. Open a PR.
-4. Spawn a review subagent to review the PR and post its review.
-5. Address review feedback.
-6. Merge once clean.
-7. Update this handoff document with what changed and the next prompt.
+Do not start the worker-resilience or cancel/retry work yet — those are later milestones. Follow the milestone → PR → review → merge → handoff workflow, and update this document when done.
