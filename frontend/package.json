@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "smoke:app-shell": "node scripts/smoke-app-shell.mjs"
+    "smoke:app-shell": "node scripts/smoke-app-shell.mjs",
+    "smoke:recorder": "node scripts/smoke-recorder.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
