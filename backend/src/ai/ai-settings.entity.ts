@@ -26,7 +26,7 @@ export class AiSettings {
   @Column({ type: 'text', nullable: true })
   anthropicApiKey!: string | null;
 
-  @Column({ length: 500, nullable: true })
+  @Column({ type: 'varchar', length: 500, nullable: true })
   ollamaBaseUrl!: string | null;
 
   @Column({ default: true })

@@ -19,10 +19,12 @@
   - `cd backend && npm test` (67 Jest tests pass)
   - `cd backend && npm run build`
   - `cd backend && npm run smoke:checkpoint2`
+  - `docker compose up -d postgres redis && cd backend && npm run migration:run`
+  - `cd backend && npm run smoke:checkpoint4 && npm run smoke:checkpoint5 && npm run smoke:checkpoint7`
   - `cd frontend && npm run lint && npm run build`
   - `cd frontend && npm run smoke:app-shell`
   - `git diff --check`
-- **Not run:** `docker compose up -d postgres redis`, migrations, and Redis/Postgres-backed smokes (`checkpoint4`, `checkpoint5`, `checkpoint7`) because the Docker daemon was unavailable: `Cannot connect to the Docker daemon at unix:///var/run/docker.sock`.
+- **Post-merge fix:** Docker-backed migration verification initially caught a TypeORM metadata issue on `AiSettings.ollamaBaseUrl`; fixed by declaring the column type explicitly as `varchar(500)`.
 - **Review:** A review subagent reviewed the final diff. Findings addressed:
   - Restricted CORS to `CORS_ORIGIN` (default `http://localhost:3000`) instead of allowing all browser origins.
   - Restricted Ollama base URLs to local/host Docker targets on the expected Ollama endpoint shape to avoid server-side arbitrary fetches.
@@ -58,7 +60,6 @@
 
 ## Known Limitations / Follow-Up Items
 - **Worker resilience remains next:** if the worker process dies mid-`executeRun`, the DB row can stay `running` and the UI polls indefinitely. Needs BullMQ stalled-event handling plus a reconciliation sweep that marks orphaned runs `failed` on boot.
-- **Docker-backed verification still needed:** run migrations and the checkpoint 4/5/7 smokes once Docker is available.
 - **Secrets are stored plaintext in Postgres for now:** this milestone redacts secrets from APIs/logs, but does not add encryption-at-rest or auth. That should be revisited before multi-user or hosted deployment.
 - **Cancel/retry remains later:** the `canceled` status exists on the enum but there is no cancel endpoint; BullMQ `attempts`/`backoff` retries are not configured.
 - Pre-existing: `npm audit --omit=dev --audit-level=high` still reports production advisories needing major Nest/tooling upgrades; out of scope.
@@ -85,7 +86,6 @@ Scope:
 - The Playwright runner needs browsers installed locally (`npx playwright install chromium`).
 - The frontend uses `NEXT_PUBLIC_API_URL` (default `http://localhost:4000`); Next.js 16 / React 19 / Tailwind / lucide. Keep it a practical QA operations shell.
 - Backend tests are Jest (`npm test`); smoke scripts are `smoke:checkpoint{2,4,5,7}`. `checkpoint7` requires Redis.
-- If Docker is running, first verify this session’s migration with `cd backend && npm run migration:run`.
 
 ## Prompt for Next Agent
 
