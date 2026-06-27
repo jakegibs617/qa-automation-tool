@@ -1,8 +1,8 @@
 # Agent Handoff
 
 ## Current Repo State
-- Latest completed milestone: **Recorder — capture discrete browser actions into structured test steps**.
-- PR #14 (`agent/recorder-mvp` -> `main`) implements the milestone.
+- Latest completed milestone: **MVP demo validation and polish**.
+- Prior recorder milestone merged in PR #14 (`agent/recorder-mvp` -> `main`).
 - NestJS backend in `backend/` listens on `http://localhost:4000`. Next.js frontend in `frontend/` listens on `http://localhost:3000`.
 - `docker-compose.yml` provides PostgreSQL (host port `55432`) and Redis (host port `6379`). Start both with `docker compose up -d`.
 - Run execution is asynchronous and resilient to worker restarts: pending runs are reconciled on worker startup, and BullMQ failed/stalled jobs mark matching DB runs failed.
@@ -11,18 +11,32 @@
 - `progress.md` tracks checkpoints. `plan.md` defines the broader MVP. A Graphify run exists in `graphify-out/`.
 
 ## Completed in Latest Session
-- **Completed milestone:** Recorder — capture discrete browser actions into structured test steps.
-- **Branch:** `agent/recorder-mvp`.
-- **PR:** #14 (`agent/recorder-mvp` -> `main`).
-- **Merged into main:** yes.
-- **Tests run:**
-  - `cd frontend && npm run smoke:recorder`
-  - `cd frontend && npm run lint && npm run build && npm run smoke:app-shell`
-  - `cd backend && npm test && npm run build` (77 Jest tests pass)
-  - `docker compose up -d postgres redis && cd backend && npm run migration:run`
+- **Completed milestone:** MVP demo validation and polish.
+- **Branch:** `agent/mvp-demo-validation-polish`.
+- **PR:** pending.
+- **Merged into main:** pending.
+- **Tests/validation run:**
+  - `docker compose up -d postgres redis`
+  - `cd backend && npm run migration:run` (no pending migrations)
+  - `cd backend && npm test -- --runTestsByPath src/projects/dto/create-project.spec.ts`
+  - `cd backend && npm test && npm run build` (79 Jest tests pass)
   - `cd backend && npm run smoke:checkpoint2 && npm run smoke:checkpoint4 && npm run smoke:checkpoint5 && npm run smoke:checkpoint7 && npm run smoke:checkpoint9`
+  - `cd frontend && npm run lint && npm run build && npm run smoke:app-shell && npm run smoke:recorder`
   - `git diff --check`
+  - Started backend with `cd backend && npm run dev`.
+  - Used existing frontend dev server at `http://localhost:3000`.
+  - Full live demo loop via Playwright browser automation:
+    - created project with `baseUrl: http://localhost:3000`
+    - imported recorder JSON into the dashboard
+    - saved a test definition
+    - triggered an async run
+    - opened run detail at `/runs/96216805-b351-4f96-9da6-a3c31778eb58`
+    - confirmed the run report artifact link is visible
+  - Loaded `frontend/recorder-extension` as an unpacked extension in headed Chromium and confirmed content-script/background capture of a real click on `http://localhost:3000/landing`.
 - **Important implementation notes:**
+  - Project creation now accepts local demo URLs such as `http://localhost:3000` by using `@IsUrl({ require_protocol: true, require_tld: false })` for `baseUrl`.
+  - Added `backend/src/projects/dto/create-project.spec.ts` to cover localhost acceptance and protocol rejection.
+  - README now documents Postgres + Redis startup, current backend/frontend verification commands, recorder extension loading/import usage, and the local MVP demo loop.
   - `frontend/recorder-extension/manifest.json` defines a local MV3 Chrome extension.
   - `content-script.js` captures discrete click, fill/change, select/change, key press, and initial navigation actions through the extension background worker.
   - Recording is scoped to the tab/window/origin that started the session so other tabs/sites cannot pollute the flow.
@@ -47,20 +61,7 @@
 - Pre-existing: `npm audit --omit=dev --audit-level=high` reports production advisories needing major Nest/tooling upgrades; out of scope.
 
 ## Recommended Goal For Next Session
-Run an **MVP demo validation and polish pass** across the creation/execution loop: project -> AI or recorder-created definition -> queued run -> artifacts/run detail.
-
-This is the right next unit because both active priorities from `plan.md` (AI generation and Recorder) are now implemented. The product is ready for a cohesive demo pass before adding larger new surfaces like scheduling or notifications.
-
-## Next Milestone: MVP demo validation and polish
-Make the current MVP loop smooth enough to demo end to end.
-
-Scope:
-- Walk through a fresh local setup with Docker, migrations, backend, frontend, and the recorder extension.
-- Create a project, import a recorder flow or generate with AI, save a definition, run it, and inspect artifacts.
-- Fix small UX or integration rough edges found in that loop.
-- Update README/setup docs for the recorder extension and current smoke commands.
-- Add smoke coverage only where it catches a real integration gap.
-- Keep changes scoped: do not add scheduling, Slack notifications, auth, AI failure analysis, selector healing, or hosted extension packaging in this milestone.
+Finish PR verification for the **MVP demo validation and polish** branch, then open/merge the PR. After that, pick the next product milestone deliberately from `plan.md` (likely scheduling or notifications), unless the demo uncovers more critical polish.
 
 ## Notes for the Next Agent
 - Use NestJS + TypeORM in `backend/`; keep `npm`.
@@ -77,15 +78,18 @@ You are continuing this project from the current `main` branch.
 
 Start by reading `agent-handoff.md`, `progress.md`, `plan.md`, the README, and the relevant test/smoke scripts.
 
-Your task is to implement the next milestone:
+Your task is to finish the current milestone branch:
 
-**MVP demo validation and polish**
+**MVP demo validation and polish PR wrap-up**
 
 Scope:
-- Validate the full current MVP flow locally: project -> AI-generated or recorder-imported test definition -> async run -> run detail/artifacts.
-- Load and use the Chrome extension from `frontend/recorder-extension`.
-- Fix small scoped issues that block or materially weaken that demo loop.
-- Update README/setup docs for recorder usage and current verification commands.
-- Run focused checks, full relevant suites, builds, and smoke checks.
+- Run the remaining required verification:
+  - `cd backend && npm test && npm run build`
+  - `cd frontend && npm run lint && npm run build`
+  - `cd backend && npm run smoke:checkpoint2 && npm run smoke:checkpoint4 && npm run smoke:checkpoint5 && npm run smoke:checkpoint7 && npm run smoke:checkpoint9`
+  - `cd frontend && npm run smoke:app-shell && npm run smoke:recorder`
+  - `git diff --check`
+- Open a PR, address review feedback, and merge when clean.
+- Keep changes scoped to the validation/polish branch.
 
 Do not work beyond this milestone: no scheduling, Slack notifications, auth, AI failure analysis, selector healing, or hosted extension packaging.

@@ -6,6 +6,6 @@ export class CreateProjectDto {
   name!: string;
 
   @IsString()
-  @IsUrl()
+  @IsUrl({ require_protocol: true, require_tld: false })
   baseUrl!: string;
 }

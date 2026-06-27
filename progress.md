@@ -35,6 +35,11 @@
   - Frontend now polls every 1.5s while a run is `queued`/`running`: the run-detail route (`frontend/app/runs/[runId]/page.tsx`) and the dashboard run history (`frontend/app/page.tsx`) update live until a terminal status.
   - Added `npm run smoke:checkpoint7` (DB-free; exercises the real queue/worker round-trip against Redis) and rewrote `test-runs.service.spec.ts` to cover the `enqueueRun`/`executeRun` split (45 jest tests pass).
 - Verified Checkpoint 7 with `npm run build` + `npm test` + `npm run smoke:checkpoint2/4/5/7` (backend, Redis via `docker compose up -d redis`), `npm run lint` + `npm run build` (frontend), and a full-stack async flow against local Postgres + Redis: triggering a run returned `202`/`queued` immediately, then polling observed `running` → `passed` (only `report.json`) and, for a deliberately failing definition, `running` → `failed` with a real `failure.png` + `trace.zip`.
+- MVP demo validation and polish:
+  - Verified the current full-stack loop locally with Docker Postgres/Redis, migrations, backend, frontend, recorder JSON import, async run execution, run detail, and report artifacts.
+  - Verified the unpacked Chrome recorder extension from `frontend/recorder-extension` can load in Chromium and capture a real landing-page click as structured recorder state.
+  - Allowed project `baseUrl` values such as `http://localhost:3000` while still requiring an explicit URL protocol, so local demos can use the normal Next.js URL.
+  - Updated README setup/demo docs with Redis, recorder usage, and current smoke commands.
 
 ## Next
 - Optionally capture video and expand `report.json` with richer per-step timings/outputs.
