@@ -5,7 +5,40 @@ import {
   isActionInRecordingScope,
   recordingToTestDefinition,
   selectorFromTarget,
+  targetFromElement,
 } from '../recorder-extension/recorder-core.js';
+
+function fakeElement(attrs) {
+  return {
+    tagName: 'DIV',
+    id: '',
+    className: '',
+    parentElement: null,
+    nodeType: 1,
+    textContent: '',
+    getAttribute: (name) => (name in attrs ? attrs[name] : null),
+  };
+}
+
+assert.equal(
+  targetFromElement(fakeElement({ 'data-qa': 'row-1' })).testId,
+  'row-1',
+);
+assert.equal(
+  targetFromElement(fakeElement({ 'data-testid': 'primary', 'data-qa': 'row-1' })).testId,
+  'primary',
+);
+
+// Round-trip through selectorFromTarget: the selector must reference whichever
+// attribute actually matched, not always assume data-testid.
+assert.equal(
+  selectorFromTarget(targetFromElement(fakeElement({ 'data-qa': 'row-1' }))),
+  '[data-qa="row-1"]',
+);
+assert.equal(
+  selectorFromTarget(targetFromElement(fakeElement({ 'data-test-id': 'submit' }))),
+  '[data-test-id="submit"]',
+);
 
 assert.equal(
   selectorFromTarget({

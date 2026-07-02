@@ -2,7 +2,7 @@ export const recorderActionTypes = ['goto', 'click', 'fill', 'press', 'select'];
 
 export function selectorFromTarget(target) {
   if (target.testId) {
-    return `[data-testid="${cssEscape(target.testId)}"]`;
+    return `[${target.testIdAttr || 'data-testid'}="${cssEscape(target.testId)}"]`;
   }
   if (target.ariaLabel) {
     return `[aria-label="${cssEscape(target.ariaLabel)}"]`;
@@ -76,11 +76,23 @@ export function isActionInRecordingScope(state, candidate) {
   }
 }
 
+const TEST_ID_ATTRS = ['data-testid', 'data-test-id', 'data-test', 'data-qa'];
+
+function testId(element) {
+  for (const name of TEST_ID_ATTRS) {
+    const value = attr(element, name);
+    if (value) return { attr: name, value };
+  }
+  return null;
+}
+
 export function targetFromElement(element) {
   const text = visibleText(element);
   const role = explicitOrInferredRole(element);
+  const testIdMatch = testId(element);
   return {
-    testId: attr(element, 'data-testid'),
+    testId: testIdMatch ? testIdMatch.value : null,
+    testIdAttr: testIdMatch ? testIdMatch.attr : null,
     ariaLabel: attr(element, 'aria-label'),
     role,
     text,
