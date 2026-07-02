@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-07-02",
+  "sourceReport": "design-patterns-first-principles-audit.md",
+  "purpose": "Track ordered implementation work from the first-principles and reusable object-oriented design audit.",
+  "agentInstructions": {
+    "selectionRule": "Implement the first task whose status is not complete and whose dependencies are complete.",
+    "branchRule": "Create a focused branch from main for each task or small compatible batch.",
+    "scopeRule": "Keep each task behavior-preserving unless the acceptanceCriteria explicitly requires a behavior change.",
+    "verificationRule": "Run the listed verification commands plus any focused tests added or changed by the task.",
+    "statusValues": [
+      "pending",
+      "in_progress",
+      "blocked",
+      "complete"
+    ]
+  },
+  "summary": {
+    "totalTasks": 6,
+    "completeTasks": 1,
+    "inProgressTasks": 0,
+    "blockedTasks": 0,
+    "pendingTasks": 5
+  },
+  "tasks": [
+    {
+      "id": "design-001-shared-recorder-selector-policy",
+      "order": 1,
+      "title": "Extract shared recorder selector policy",
+      "status": "complete",
+      "priority": "high",
+      "auditFinding": "Selector Extraction Is Duplicated Across Recorder Runtime And Shared Core",
+      "firstPrinciplesForce": "Selector priority is a central recorder policy and must remain consistent between capture, conversion, tests, and eventual selector healing.",
+      "patterns": [
+        "Extract Module",
+        "Strategy-ready policy boundary"
+      ],
+      "antiPatternsAddressed": [
+        "Duplicated Code",
+        "Divergent Change"
+      ],
+      "likelyFiles": [
+        "frontend/recorder-extension/selector-policy.js",
+        "frontend/recorder-extension/content-script.js",
+        "frontend/recorder-extension/recorder-core.js",
+        "frontend/scripts/smoke-recorder.mjs"
+      ],
+      "implementationNotes": [
+        "Move DOM-safe helper functions for test id detection, accessible label detection, role inference, visible text extraction, CSS fallback, and escaping into a shared plain JavaScript module.",
+        "Import the shared module from both content-script.js and recorder-core.js without introducing build tooling.",
+        "Preserve current selector priority and any existing uncommitted recorder behavior.",
+        "Add or update smoke coverage proving both runtime capture and recording conversion use the same selector policy."
+      ],
+      "acceptanceCriteria": [
+        "No duplicated targetFromElement, attr, visibleText, explicitOrInferredRole, cssSelector, or cssEscape implementations remain across content-script.js and recorder-core.js.",
+        "Recorder JSON import still converts actions into test-definition steps.",
+        "Existing support for data-testid and any already-added alternate test id attributes remains intact.",
+        "Smoke tests cover selector priority."
+      ],
+      "verificationCommands": [
+        "cd frontend && npm run smoke:recorder",
+        "cd frontend && npm run lint"
+      ],
+      "dependencies": [],
+      "completedAt": "2026-07-02",
+      "pr": "https://github.com/jakegibs617/qa-automation-tool/pull/18",
+      "notes": [
+        "MV3 content_scripts cannot declare type: module, so selector-policy.js is a plain UMD-style script assigned onto globalThis.RecorderSelectorPolicy rather than using ES import/export; content-script.js and recorder-core.js both read the same object.",
+        "Review subagent could not formally GitHub-approve its own PR (gh blocks self-approval for the same authenticated account) and posted its verdict as a comment instead; review was substantive (ran tests, diffed against main, empirically verified the new regression assertion) but carries no formal approval status."
+      ]
+    },
+    {
+      "id": "design-002-run-artifact-writer",
+      "order": 2,
+      "title": "Extract RunArtifactWriter from TestRunsService",
+      "status": "pending",
+      "priority": "high",
+      "auditFinding": "TestRunsService Is Becoming An Orchestration God Object",
+      "firstPrinciplesForce": "Run lifecycle orchestration and artifact persistence change for different reasons.",
+      "patterns": [
+        "Application Service",
+        "Extract Class",
+        "Adapter collaboration"
+      ],
+      "antiPatternsAddressed": [
+        "God Object",
+        "Shotgun Surgery"
+      ],
+      "likelyFiles": [
+        "backend/src/test-runs/test-runs.service.ts",
+        "backend/src/test-runs/run-artifact-writer.service.ts",
+        "backend/src/test-runs/test-runs.module.ts",
+        "backend/src/test-runs/test-runs.service.spec.ts",
+        "backend/src/test-runs/run-report.spec.ts"
+      ],
+      "implementationNotes": [
+        "Move writeRunArtifacts and saveArtifact responsibilities out of TestRunsService.",
+        "Inject ArtifactStorageService and Artifact repository into the new writer service.",
+        "Keep artifact storage keys, placeholder behavior, content types, and best-effort failure handling behavior unchanged.",
+        "Leave broader run lifecycle extraction for a later task."
+      ],
+      "acceptanceCriteria": [
+        "TestRunsService no longer directly writes artifact content or creates Artifact rows.",
+        "Run report, screenshot placeholder, trace placeholder, real screenshot, and real trace behavior remain unchanged.",
+        "Artifact persistence failure still appends a log entry without failing an otherwise completed run.",
+        "Focused tests pass."
+      ],
+      "verificationCommands": [
+        "cd backend && npm test -- --runTestsByPath src/test-runs/test-runs.service.spec.ts src/test-runs/run-report.spec.ts",
+        "cd backend && npm test"
+      ],
+      "dependencies": [],
+      "completedAt": null,
+      "pr": null,
+      "notes": []
+    },
+    {
+      "id": "design-003-dashboard-workflow-hooks",
+      "order": 3,
+      "title": "Extract dashboard workflow hooks",
+      "status": "pending",
+      "priority": "medium",
+      "auditFinding": "Frontend Page Components Own Too Much Workflow State",
+      "firstPrinciplesForce": "Dashboard data workflow and dashboard rendering change for different reasons.",
+      "patterns": [
+        "Facade",
+        "Controller Hook",
+        "Extract Module"
+      ],
+      "antiPatternsAddressed": [
+        "Large Component",
+        "Shotgun Surgery"
+      ],
+      "likelyFiles": [
+        "frontend/app/page.tsx",
+        "frontend/hooks/use-project-detail.ts",
+        "frontend/hooks/use-run-polling.ts",
+        "frontend/scripts/smoke-app-shell.mjs"
+      ],
+      "implementationNotes": [
+        "Extract project detail loading into useProjectDetail(projectId).",
+        "Extract pending-run polling into useRunPolling(projectId, runs, onRunsLoaded).",
+        "Keep JSX structure and visible UI behavior unchanged.",
+        "Prefer a small hook extraction before larger component splitting."
+      ],
+      "acceptanceCriteria": [
+        "page.tsx no longer owns all project detail loading and run polling mechanics directly.",
+        "Pending runs still refresh about every 1500ms.",
+        "Project selection, test definition listing, run history, and refresh button behavior remain unchanged.",
+        "App shell smoke test still passes."
+      ],
+      "verificationCommands": [
+        "cd frontend && npm run lint",
+        "cd frontend && npm run smoke:app-shell"
+      ],
+      "dependencies": [],
+      "completedAt": null,
+      "pr": null,
+      "notes": []
+    },
+    {
+      "id": "design-004-step-handler-registry",
+      "order": 4,
+      "title": "Convert step validation and dispatch toward a handler registry",
+      "status": "pending",
+      "priority": "medium",
+      "auditFinding": "Step Execution Is A Switch Statement Waiting For Polymorphism",
+      "firstPrinciplesForce": "Step type is the axis of variation for validation, dispatch behavior, logging, AI schema, recorder conversion, and frontend typing.",
+      "patterns": [
+        "Command",
+        "Strategy",
+        "Registry"
+      ],
+      "antiPatternsAddressed": [
+        "Switch Statement",
+        "Shotgun Surgery",
+        "Primitive Obsession"
+      ],
+      "likelyFiles": [
+        "backend/src/test-definitions/dto/test-step.dto.ts",
+        "backend/src/test-runs/step-dispatcher.service.ts",
+        "backend/src/test-runs/step-dispatcher.service.spec.ts",
+        "backend/src/ai/ai-test-generation.service.ts"
+      ],
+      "implementationNotes": [
+        "Start with a behavior-preserving table or registry rather than a large class hierarchy.",
+        "Centralize per-step required fields and dispatch/log behavior where practical.",
+        "Avoid changing the external TestStep JSON shape.",
+        "Keep AI schema and frontend type synchronization visible if they remain separate."
+      ],
+      "acceptanceCriteria": [
+        "Existing step types validate exactly as before.",
+        "Existing Playwright dispatch behavior and log text remain compatible with current tests.",
+        "Adding a future step type has a clearer single registration path than editing multiple switches.",
+        "Step dispatcher focused tests pass."
+      ],
+      "verificationCommands": [
+        "cd backend && npm test -- --runTestsByPath src/test-runs/step-dispatcher.service.spec.ts src/test-definitions/dto/create-test-definition.spec.ts",
+        "cd backend && npm test"
+      ],
+      "dependencies": [],
+      "completedAt": null,
+      "pr": null,
+      "notes": []
+    },
+    {
+      "id": "design-005-ai-provider-adapters",
+      "order": 5,
+      "title": "Introduce AI provider adapter boundary when provider variation grows",
+      "status": "pending",
+      "priority": "medium",
+      "auditFinding": "AI Provider Selection Wants Strategy, Not Branching Inside The Generator",
+      "firstPrinciplesForce": "Generating structured tests is stable, while provider transport, credentials, response shape, and error mapping vary independently.",
+      "patterns": [
+        "Strategy",
+        "Adapter"
+      ],
+      "antiPatternsAddressed": [
+        "Open/Closed friction",
+        "Provider branching growth"
+      ],
+      "likelyFiles": [
+        "backend/src/ai/ai-test-generation.service.ts",
+        "backend/src/ai/ai-provider-adapter.ts",
+        "backend/src/ai/anthropic-provider.adapter.ts",
+        "backend/src/ai/ollama-provider.adapter.ts",
+        "backend/src/ai/ai.module.ts",
+        "backend/src/ai/ai-test-generation.service.spec.ts"
+      ],
+      "implementationNotes": [
+        "This task is optional until a third provider is added or current tests become painful.",
+        "Keep shared prompt construction, step validation, and base URL scoping centralized.",
+        "Move provider-specific API calls and response extraction behind adapters.",
+        "Do not change the public AI settings API."
+      ],
+      "acceptanceCriteria": [
+        "AiTestGenerationService delegates provider-specific generation to adapters.",
+        "Anthropic and Ollama behavior remains unchanged.",
+        "Unsupported providers still fail clearly.",
+        "AI generation and settings tests pass."
+      ],
+      "verificationCommands": [
+        "cd backend && npm test -- --runTestsByPath src/ai/ai-test-generation.service.spec.ts src/ai/ai-settings.service.spec.ts",
+        "cd backend && npm test"
+      ],
+      "dependencies": [],
+      "completedAt": null,
+      "pr": null,
+      "notes": [
+        "Defer if no third provider or provider-test pain exists yet."
+      ]
+    },
+    {
+      "id": "design-006-shared-test-step-kernel",
+      "order": 6,
+      "title": "Create or prepare a shared test-step kernel",
+      "status": "pending",
+      "priority": "low",
+      "auditFinding": "Domain Types Are Repeated Across Backend, Frontend, AI Schema, And Recorder",
+      "firstPrinciplesForce": "TestStep is the product's shared language; mismatch across generation, editing, recording, validation, and execution is a product bug.",
+      "patterns": [
+        "Shared Kernel",
+        "Single Source of Truth"
+      ],
+      "antiPatternsAddressed": [
+        "Stringly Typed Design",
+        "Parallel Drift"
+      ],
+      "likelyFiles": [
+        "backend/src/test-definitions/dto/test-step.dto.ts",
+        "frontend/lib/api.ts",
+        "backend/src/ai/ai-test-generation.service.ts",
+        "frontend/recorder-extension/recorder-core.js",
+        "package.json"
+      ],
+      "implementationNotes": [
+        "Start with a documented checklist near supportedStepTypes if a full shared package is too heavy.",
+        "Consider a shared package only when the step language changes again or when frontend/backend type drift causes friction.",
+        "If implemented, keep runtime validation available to the backend and schema generation available to AI output constraints.",
+        "Avoid introducing monorepo package complexity unless it reduces real synchronization work."
+      ],
+      "acceptanceCriteria": [
+        "There is a clear source of truth or checklist for every place that must change when adding a step type.",
+        "Frontend and backend step type definitions remain consistent.",
+        "AI output schema remains consistent with backend validation.",
+        "Recorder conversion remains consistent with supported step types."
+      ],
+      "verificationCommands": [
+        "cd backend && npm test -- --runTestsByPath src/test-definitions/dto/create-test-definition.spec.ts src/ai/ai-test-generation.service.spec.ts",
+        "cd frontend && npm run smoke:recorder",
+        "cd frontend && npm run lint"
+      ],
+      "dependencies": [
+        "design-004-step-handler-registry"
+      ],
+      "completedAt": null,
+      "pr": null,
+      "notes": [
+        "This is intentionally last because it may be unnecessary until step types change again."
+      ]
+    }
+  ]
+}
