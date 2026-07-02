@@ -29,6 +29,17 @@ assert.equal(
   'primary',
 );
 
+// Round-trip through selectorFromTarget: the selector must reference whichever
+// attribute actually matched, not always assume data-testid.
+assert.equal(
+  selectorFromTarget(targetFromElement(fakeElement({ 'data-qa': 'row-1' }))),
+  '[data-qa="row-1"]',
+);
+assert.equal(
+  selectorFromTarget(targetFromElement(fakeElement({ 'data-test-id': 'submit' }))),
+  '[data-test-id="submit"]',
+);
+
 assert.equal(
   selectorFromTarget({
     testId: 'login-button',

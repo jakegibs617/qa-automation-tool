@@ -93,7 +93,7 @@ const TEST_ID_ATTRS = ['data-testid', 'data-test-id', 'data-test', 'data-qa'];
 function testId(element) {
   for (const name of TEST_ID_ATTRS) {
     const value = attr(element, name);
-    if (value) return value;
+    if (value) return { attr: name, value };
   }
   return null;
 }
@@ -101,8 +101,10 @@ function testId(element) {
 function targetFromElement(element) {
   const text = visibleText(element);
   const role = explicitOrInferredRole(element);
+  const testIdMatch = testId(element);
   return {
-    testId: testId(element),
+    testId: testIdMatch ? testIdMatch.value : null,
+    testIdAttr: testIdMatch ? testIdMatch.attr : null,
     ariaLabel: attr(element, 'aria-label'),
     role,
     text,
