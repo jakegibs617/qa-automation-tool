@@ -1,3 +1,7 @@
+import './selector-policy.js';
+
+const { targetFromElement, cssEscape } = globalThis.RecorderSelectorPolicy;
+
 export const recorderActionTypes = ['goto', 'click', 'fill', 'press', 'select'];
 
 export function selectorFromTarget(target) {
@@ -76,29 +80,7 @@ export function isActionInRecordingScope(state, candidate) {
   }
 }
 
-const TEST_ID_ATTRS = ['data-testid', 'data-test-id', 'data-test', 'data-qa'];
-
-function testId(element) {
-  for (const name of TEST_ID_ATTRS) {
-    const value = attr(element, name);
-    if (value) return { attr: name, value };
-  }
-  return null;
-}
-
-export function targetFromElement(element) {
-  const text = visibleText(element);
-  const role = explicitOrInferredRole(element);
-  const testIdMatch = testId(element);
-  return {
-    testId: testIdMatch ? testIdMatch.value : null,
-    testIdAttr: testIdMatch ? testIdMatch.attr : null,
-    ariaLabel: attr(element, 'aria-label'),
-    role,
-    text,
-    css: cssSelector(element),
-  };
-}
+export { targetFromElement };
 
 function ensureLeadingGoto(steps, startUrl) {
   if (steps[0]?.type === 'goto') {
@@ -130,81 +112,4 @@ function nonEmpty(value) {
 
 function selectorText(value) {
   return value.replace(/\s+/g, ' ').trim().slice(0, 80).replace(/"/g, '\\"');
-}
-
-function attr(element, name) {
-  const value = element.getAttribute?.(name);
-  return nonEmpty(value) ? value.trim() : null;
-}
-
-function visibleText(element) {
-  const value =
-    element.innerText ||
-    element.textContent ||
-    attr(element, 'title') ||
-    '';
-  return nonEmpty(value) ? value.replace(/\s+/g, ' ').trim().slice(0, 80) : null;
-}
-
-function explicitOrInferredRole(element) {
-  const explicit = attr(element, 'role');
-  if (explicit) {
-    return explicit;
-  }
-
-  const tag = element.tagName?.toLowerCase();
-  if (tag === 'button') return 'button';
-  if (tag === 'a' && attr(element, 'href')) return 'link';
-  if (tag === 'select') return 'combobox';
-  if (tag === 'textarea') return 'textbox';
-  if (tag === 'input') {
-    const type = (attr(element, 'type') || 'text').toLowerCase();
-    if (['button', 'submit', 'reset'].includes(type)) return 'button';
-    if (type === 'checkbox') return 'checkbox';
-    if (type === 'radio') return 'radio';
-    return 'textbox';
-  }
-  return null;
-}
-
-function cssSelector(element) {
-  if (element.id) {
-    return `#${cssEscape(element.id)}`;
-  }
-
-  const parts = [];
-  let current = element;
-  while (current && current.nodeType === 1 && parts.length < 4) {
-    const tag = current.tagName.toLowerCase();
-    let part = tag;
-    const className = typeof current.className === 'string' ? current.className : '';
-    const stableClass = className
-      .split(/\s+/)
-      .find((name) => name && !/^(css-|sc-|jsx-|_)/.test(name));
-    if (stableClass) {
-      part += `.${cssEscape(stableClass)}`;
-    }
-
-    const parent = current.parentElement;
-    if (parent) {
-      const siblings = Array.from(parent.children).filter(
-        (child) => child.tagName === current.tagName,
-      );
-      if (siblings.length > 1) {
-        part += `:nth-of-type(${siblings.indexOf(current) + 1})`;
-      }
-    }
-
-    parts.unshift(part);
-    current = parent;
-  }
-
-  return parts.join(' > ');
-}
-
-function cssEscape(value) {
-  if (globalThis.CSS?.escape) {
-    return globalThis.CSS.escape(value);
-  }
-  return String(value).replace(/["\\]/g, '\\$&');
 }
