@@ -6,6 +6,8 @@ export type Project = {
   updatedAt: string;
 };
 
+// Mirrors backend/src/test-steps/step-registry.ts (the source of truth for
+// step types); drift is caught by backend step-language-sync.spec.ts.
 export type TestStep = {
   type:
     | 'goto'

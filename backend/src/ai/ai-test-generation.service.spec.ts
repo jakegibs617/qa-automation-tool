@@ -1,9 +1,12 @@
 import {
+  BadRequestException,
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { AiSettingsService, EffectiveAiSettings } from './ai-settings.service';
 import { AiTestGenerationService } from './ai-test-generation.service';
+import { AnthropicProviderAdapter } from './anthropic-provider.adapter';
+import { OllamaProviderAdapter } from './ollama-provider.adapter';
 
 const anthropicSettings: EffectiveAiSettings = {
   provider: 'anthropic',
@@ -42,7 +45,10 @@ const setup = (settings: EffectiveAiSettings = anthropicSettings) => {
     getEffectiveSettings: jest.fn().mockResolvedValue(settings),
   } as Pick<AiSettingsService, 'getEffectiveSettings'> as AiSettingsService;
   const anthropicFactory = jest.fn().mockReturnValue({ messages: { create } });
-  const service = new AiTestGenerationService(settingsService, anthropicFactory);
+  const service = new AiTestGenerationService(settingsService, [
+    new AnthropicProviderAdapter(anthropicFactory),
+    new OllamaProviderAdapter(),
+  ]);
   return { service, create, anthropicFactory, settingsService };
 };
 
@@ -62,6 +68,28 @@ describe('AiTestGenerationService', () => {
   it('reports not configured when Anthropic is selected without an API key', async () => {
     const { service } = setup({ ...anthropicSettings, anthropicApiKey: null });
     await expect(service.isConfigured()).resolves.toBe(false);
+  });
+
+  it('reports not configured for a provider with no registered adapter', async () => {
+    const { service } = setup({
+      ...anthropicSettings,
+      provider: 'unsupported' as EffectiveAiSettings['provider'],
+    });
+    await expect(service.isConfigured()).resolves.toBe(false);
+  });
+
+  it('fails clearly when the selected provider has no registered adapter', async () => {
+    const { service } = setup({
+      ...anthropicSettings,
+      provider: 'unsupported' as EffectiveAiSettings['provider'],
+    });
+
+    await expect(service.generate({ prompt: 'log in' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(service.generate({ prompt: 'log in' })).rejects.toThrow(
+      'Unsupported AI provider selected.',
+    );
   });
 
   it('uses saved Anthropic settings and sends a schema-constrained request', async () => {

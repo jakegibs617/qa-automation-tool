@@ -6,17 +6,9 @@ import {
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import Anthropic from '@anthropic-ai/sdk';
 import { AiSettingsService, EffectiveAiSettings } from './ai-settings.service';
-import {
-  supportedStepTypes,
-  TestStepDto,
-  validateTestStep,
-} from '../test-definitions/dto/test-step.dto';
-
-export const ANTHROPIC_FACTORY = 'ANTHROPIC_FACTORY';
-
-export type AnthropicFactory = (apiKey: string) => Anthropic;
+import { AI_PROVIDER_ADAPTERS, AiProviderAdapter } from './ai-provider-adapter';
+import { TestStepDto, validateTestStep } from '../test-definitions/dto/test-step.dto';
 
 export type GenerateStepsInput = {
   prompt: string;
@@ -30,56 +22,11 @@ export type GeneratedTest = {
   steps: TestStepDto[];
 };
 
-// JSON-schema-constrained output: the model must return exactly this shape.
-// Per-type field requirements are enforced afterwards by validateTestStep.
-const OUTPUT_SCHEMA = {
-  type: 'object',
-  properties: {
-    name: { type: 'string' },
-    startUrl: { type: 'string' },
-    steps: {
-      type: 'array',
-      maxItems: 40,
-      items: {
-        type: 'object',
-        properties: {
-          type: { type: 'string', enum: [...supportedStepTypes] },
-          url: { type: 'string' },
-          selector: { type: 'string' },
-          value: { type: 'string' },
-          key: { type: 'string' },
-          text: { type: 'string' },
-          timeoutMs: { type: 'integer' },
-        },
-        required: ['type'],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ['name', 'startUrl', 'steps'],
-  additionalProperties: false,
-} as const;
-
-const SYSTEM_PROMPT = `You convert a plain-language QA testing request into a structured browser test for a Playwright-based runner.
-
-Output a JSON object with: a short "name" (a few words), a "startUrl" (a path like "/login" or an absolute URL; use the provided startUrl when given, otherwise "/"), and an ordered "steps" array.
-
-Each step has a "type" and only the fields that type needs:
-- goto: { type, url }
-- click: { type, selector }
-- fill: { type, selector, value }
-- press: { type, selector, key }       // key is a keyboard key like "Enter"
-- select: { type, selector, value }
-- wait: { type, timeoutMs }            // timeoutMs is an optional non-negative integer
-- assertText: { type, selector, text } // text is expected substring
-- assertVisible: { type, selector }
-- assertUrl: { type, url }
-
-Selector guidance — prefer resilient selectors in this order: data-testid, aria-label, role, visible text, then CSS. Avoid brittle deep CSS/XPath. Do not invent steps the request does not imply. Keep the test minimal and focused on what was asked.`;
-
 /**
  * Generates structured test steps from a natural-language prompt using the
- * runtime-configured AI provider.
+ * runtime-configured AI provider. Provider transport lives behind
+ * AiProviderAdapter implementations; this service owns the shared workflow:
+ * prompt construction, response validation, and base-URL scoping.
  */
 @Injectable()
 export class AiTestGenerationService {
@@ -87,12 +34,16 @@ export class AiTestGenerationService {
 
   constructor(
     private readonly settingsService: AiSettingsService,
-    @Inject(ANTHROPIC_FACTORY) private readonly anthropicFactory: AnthropicFactory,
+    @Inject(AI_PROVIDER_ADAPTERS)
+    private readonly providerAdapters: AiProviderAdapter[],
   ) {}
 
   async isConfigured(): Promise<boolean> {
     const settings = await this.settingsService.getEffectiveSettings();
-    return settings.enabled && this.hasProviderConfiguration(settings);
+    if (!settings.enabled) {
+      return false;
+    }
+    return this.adapterFor(settings.provider)?.isConfigured(settings) ?? false;
   }
 
   async generate(input: GenerateStepsInput): Promise<GeneratedTest> {
@@ -116,6 +67,10 @@ export class AiTestGenerationService {
     };
   }
 
+  private adapterFor(provider: string): AiProviderAdapter | null {
+    return this.providerAdapters.find((adapter) => adapter.provider === provider) ?? null;
+  }
+
   private async generateWithSettings(
     input: GenerateStepsInput,
     settings: EffectiveAiSettings,
@@ -126,117 +81,18 @@ export class AiTestGenerationService {
       );
     }
 
+    const adapter = this.adapterFor(settings.provider);
+    if (!adapter) {
+      throw new BadRequestException('Unsupported AI provider selected.');
+    }
+
     const userParts = [`Request: ${input.prompt}`];
     if (input.startUrl) userParts.push(`Start URL: ${input.startUrl}`);
     if (input.baseUrl) userParts.push(`Base URL of the site under test: ${input.baseUrl}`);
     const userPrompt = userParts.join('\n');
 
-    if (settings.provider === 'anthropic') {
-      return this.generateWithAnthropic(settings, userPrompt, input);
-    }
-    if (settings.provider === 'ollama') {
-      return this.generateWithOllama(settings, userPrompt, input);
-    }
-
-    throw new BadRequestException('Unsupported AI provider selected.');
-  }
-
-  private async generateWithAnthropic(
-    settings: EffectiveAiSettings,
-    userPrompt: string,
-    input: GenerateStepsInput,
-  ): Promise<GeneratedTest> {
-    if (!settings.anthropicApiKey) {
-      throw new ServiceUnavailableException(
-        'Anthropic is not configured. Save an Anthropic API key in AI settings.',
-      );
-    }
-
-    const anthropic = this.anthropicFactory(settings.anthropicApiKey);
-    const response = await anthropic.messages.create({
-      model: settings.model,
-      max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      output_config: {
-        format: { type: 'json_schema', schema: OUTPUT_SCHEMA },
-      },
-      messages: [{ role: 'user', content: userPrompt }],
-    });
-
-    if (response.stop_reason === 'refusal') {
-      throw new UnprocessableEntityException(
-        'The model declined to generate steps for this request.',
-      );
-    }
-
-    const text = response.content.find(
-      (block): block is Anthropic.TextBlock => block.type === 'text',
-    )?.text;
-
-    if (!text) {
-      throw new UnprocessableEntityException('The model returned no usable output.');
-    }
-
+    const text = await adapter.generateText(settings, userPrompt);
     return this.parseAndValidate(text, input);
-  }
-
-  private async generateWithOllama(
-    settings: EffectiveAiSettings,
-    userPrompt: string,
-    input: GenerateStepsInput,
-  ): Promise<GeneratedTest> {
-    let response: Response;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
-    try {
-      response = await fetch(`${settings.ollamaBaseUrl.replace(/\/+$/, '')}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: settings.model,
-          system: SYSTEM_PROMPT,
-          prompt: userPrompt,
-          stream: false,
-          format: OUTPUT_SCHEMA,
-        }),
-      });
-    } catch {
-      throw new ServiceUnavailableException(
-        `Unable to reach Ollama at ${settings.ollamaBaseUrl}. Confirm Ollama is running and the base URL is correct.`,
-      );
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    let body: unknown;
-    try {
-      body = await response.json();
-    } catch {
-      throw new ServiceUnavailableException('Ollama returned a non-JSON response.');
-    }
-
-    const record = body as Record<string, unknown>;
-    if (!response.ok || typeof record.error === 'string') {
-      const detail = typeof record.error === 'string' ? ` ${record.error}` : '';
-      throw new ServiceUnavailableException(`Ollama generation failed.${detail}`);
-    }
-
-    if (typeof record.response !== 'string' || record.response.trim().length === 0) {
-      throw new UnprocessableEntityException('Ollama returned no usable output.');
-    }
-
-    return this.parseAndValidate(record.response, input);
-  }
-
-  private hasProviderConfiguration(settings: EffectiveAiSettings) {
-    if (settings.provider === 'anthropic') {
-      return Boolean(settings.anthropicApiKey);
-    }
-    if (settings.provider === 'ollama') {
-      return Boolean(settings.ollamaBaseUrl && settings.model);
-    }
-    return false;
   }
 
   private parseAndValidate(text: string, input: GenerateStepsInput): GeneratedTest {

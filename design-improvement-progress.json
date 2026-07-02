@@ -17,10 +17,10 @@
   },
   "summary": {
     "totalTasks": 6,
-    "completeTasks": 1,
+    "completeTasks": 6,
     "inProgressTasks": 0,
     "blockedTasks": 0,
-    "pendingTasks": 5
+    "pendingTasks": 0
   },
   "tasks": [
     {
@@ -73,7 +73,7 @@
       "id": "design-002-run-artifact-writer",
       "order": 2,
       "title": "Extract RunArtifactWriter from TestRunsService",
-      "status": "pending",
+      "status": "complete",
       "priority": "high",
       "auditFinding": "TestRunsService Is Becoming An Orchestration God Object",
       "firstPrinciplesForce": "Run lifecycle orchestration and artifact persistence change for different reasons.",
@@ -110,15 +110,17 @@
         "cd backend && npm test"
       ],
       "dependencies": [],
-      "completedAt": null,
-      "pr": null,
-      "notes": []
+      "completedAt": "2026-07-02",
+      "pr": "https://github.com/jakegibs617/qa-automation-tool/pull/20",
+      "notes": [
+        "Merged earlier on 2026-07-02 as PR #20 but the tracker was not updated at merge time; status backfilled in PR #23."
+      ]
     },
     {
       "id": "design-003-dashboard-workflow-hooks",
       "order": 3,
       "title": "Extract dashboard workflow hooks",
-      "status": "pending",
+      "status": "complete",
       "priority": "medium",
       "auditFinding": "Frontend Page Components Own Too Much Workflow State",
       "firstPrinciplesForce": "Dashboard data workflow and dashboard rendering change for different reasons.",
@@ -154,15 +156,17 @@
         "cd frontend && npm run smoke:app-shell"
       ],
       "dependencies": [],
-      "completedAt": null,
-      "pr": null,
-      "notes": []
+      "completedAt": "2026-07-02",
+      "pr": "https://github.com/jakegibs617/qa-automation-tool/pull/21",
+      "notes": [
+        "Merged earlier on 2026-07-02 as PR #21 but the tracker was not updated at merge time; status backfilled in PR #23."
+      ]
     },
     {
       "id": "design-004-step-handler-registry",
       "order": 4,
       "title": "Convert step validation and dispatch toward a handler registry",
-      "status": "pending",
+      "status": "complete",
       "priority": "medium",
       "auditFinding": "Step Execution Is A Switch Statement Waiting For Polymorphism",
       "firstPrinciplesForce": "Step type is the axis of variation for validation, dispatch behavior, logging, AI schema, recorder conversion, and frontend typing.",
@@ -199,15 +203,18 @@
         "cd backend && npm test"
       ],
       "dependencies": [],
-      "completedAt": null,
-      "pr": null,
-      "notes": []
+      "completedAt": "2026-07-02",
+      "pr": "https://github.com/jakegibs617/qa-automation-tool/pull/22",
+      "notes": [
+        "Merged earlier on 2026-07-02 as PR #22 but the tracker was not updated at merge time; status backfilled in PR #23.",
+        "Implemented as backend/src/test-steps/step-registry.ts: one entry per step type holding required fields and Playwright execution behavior."
+      ]
     },
     {
       "id": "design-005-ai-provider-adapters",
       "order": 5,
       "title": "Introduce AI provider adapter boundary when provider variation grows",
-      "status": "pending",
+      "status": "complete",
       "priority": "medium",
       "auditFinding": "AI Provider Selection Wants Strategy, Not Branching Inside The Generator",
       "firstPrinciplesForce": "Generating structured tests is stable, while provider transport, credentials, response shape, and error mapping vary independently.",
@@ -244,17 +251,20 @@
         "cd backend && npm test"
       ],
       "dependencies": [],
-      "completedAt": null,
-      "pr": null,
+      "completedAt": "2026-07-02",
+      "pr": "https://github.com/jakegibs617/qa-automation-tool/pull/23",
       "notes": [
-        "Defer if no third provider or provider-test pain exists yet."
+        "Defer if no third provider or provider-test pain exists yet.",
+        "Task notes marked this deferrable until a third provider existed; implemented now (at user direction to complete the list) with a deliberately minimal surface: AiProviderAdapter is one generateText method plus an isConfigured predicate.",
+        "Provider transport lives in anthropic-provider.adapter.ts and ollama-provider.adapter.ts, injected via the AI_PROVIDER_ADAPTERS token; the shared system prompt and output schema moved to generation-prompt.ts; prompt construction, validation, and base-URL scoping stay in AiTestGenerationService.",
+        "Behavior-preserving: all error messages, the 30s Ollama timeout, and the unsupported-provider 400 are unchanged."
       ]
     },
     {
       "id": "design-006-shared-test-step-kernel",
       "order": 6,
       "title": "Create or prepare a shared test-step kernel",
-      "status": "pending",
+      "status": "complete",
       "priority": "low",
       "auditFinding": "Domain Types Are Repeated Across Backend, Frontend, AI Schema, And Recorder",
       "firstPrinciplesForce": "TestStep is the product's shared language; mismatch across generation, editing, recording, validation, and execution is a product bug.",
@@ -293,10 +303,13 @@
       "dependencies": [
         "design-004-step-handler-registry"
       ],
-      "completedAt": null,
-      "pr": null,
+      "completedAt": "2026-07-02",
+      "pr": "https://github.com/jakegibs617/qa-automation-tool/pull/23",
       "notes": [
-        "This is intentionally last because it may be unnecessary until step types change again."
+        "This is intentionally last because it may be unnecessary until step types change again.",
+        "Implemented in the lightweight form its own implementation notes recommend: no shared package or monorepo tooling; the step registry from design-004 remains the single source of truth.",
+        "backend/src/test-steps/step-language-sync.spec.ts turns the hand-sync checklist into executable drift detection: AI schema enum/fields, system prompt coverage, frontend TestStep union (read from disk), and recorderActionTypes subset.",
+        "Revisit a real shared package only if the step language starts changing frequently enough that the drift tests become churn."
       ]
     }
   ]
