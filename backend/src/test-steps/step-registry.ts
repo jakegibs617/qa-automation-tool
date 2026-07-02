@@ -6,9 +6,14 @@ import type { Page } from 'playwright';
  * means adding one entry here, then updating the places that intentionally
  * stay separate (kept in sync by hand — see the checklist below):
  *
- * - AI generation prompt/schema: `backend/src/ai/ai-test-generation.service.ts`
+ * - AI generation prompt/schema: `backend/src/ai/generation-prompt.ts`
+ *   (the schema enum derives from this registry; the prompt text is manual)
  * - Frontend step typing: `frontend/lib/api.ts` (`TestStep`)
  * - Recorder conversion: `frontend/recorder-extension/recorder-core.js`
+ *   (`recorderActionTypes` must stay a subset of the registry's types)
+ *
+ * Drift across these surfaces is caught by `step-language-sync.spec.ts`
+ * next to this file — extend that spec when adding a surface.
  */
 
 export type StepContext = {

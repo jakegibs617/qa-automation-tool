@@ -2,6 +2,8 @@ import './selector-policy.js';
 
 const { targetFromElement, cssEscape } = globalThis.RecorderSelectorPolicy;
 
+// Must stay a subset of the step types in backend/src/test-steps/step-registry.ts;
+// drift is caught by backend step-language-sync.spec.ts.
 export const recorderActionTypes = ['goto', 'click', 'fill', 'press', 'select'];
 
 export function selectorFromTarget(target) {
