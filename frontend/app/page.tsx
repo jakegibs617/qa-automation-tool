@@ -32,6 +32,8 @@ import {
   TestStep,
 } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useProjectDetail } from '@/hooks/use-project-detail';
+import { useRunPolling } from '@/hooks/use-run-polling';
 import { StatusBadge } from '@/components/status-badge';
 import { TutorialModal } from '@/components/tutorial-modal';
 import { TutorialWalkthrough } from '@/components/tutorial-walkthrough';
@@ -51,10 +53,7 @@ type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [definitions, setDefinitions] = useState<TestDefinition[]>([]);
-  const [runs, setRuns] = useState<TestRun[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('idle');
-  const [detailState, setDetailState] = useState<LoadState>('idle');
   const [message, setMessage] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [runningDefinitionId, setRunningDefinitionId] = useState<string | null>(null);
@@ -62,6 +61,12 @@ export default function Home() {
   const [walkthroughStep, setWalkthroughStep] = useState<number | null>(null);
   const [aiSettings, setAiSettings] = useState<AiSettings | null>(null);
   const [aiSettingsState, setAiSettingsState] = useState<LoadState>('idle');
+
+  const { definitions, runs, setRuns, detailState, reload } = useProjectDetail(
+    selectedProjectId,
+    setMessage,
+  );
+  useRunPolling(selectedProjectId, runs, setRuns);
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null;
 
@@ -106,66 +111,10 @@ export default function Home() {
     }
   }
 
-  async function loadProjectDetail(projectId: string) {
-    setDetailState('loading');
-    setMessage(null);
-
-    try {
-      const [definitionResult, runResult] = await Promise.all([
-        api.listTestDefinitions(projectId),
-        api.listRuns(projectId),
-      ]);
-      setDefinitions(definitionResult);
-      setRuns(runResult);
-      setDetailState('ready');
-    } catch (error) {
-      setDetailState('error');
-      setMessage(error instanceof Error ? error.message : 'Unable to load project detail');
-    }
-  }
-
   useEffect(() => {
     void loadProjects();
     void loadAiSettings();
   }, []);
-
-  useEffect(() => {
-    if (selectedProjectId) {
-      void loadProjectDetail(selectedProjectId);
-    } else {
-      setDefinitions([]);
-      setRuns([]);
-    }
-  }, [selectedProjectId]);
-
-  // While any run is queued or running, silently refresh the run list so the
-  // history and latest-status reflect the background worker's progress.
-  const hasPendingRun = runs.some(
-    (run) => run.status === 'queued' || run.status === 'running',
-  );
-
-  useEffect(() => {
-    if (!selectedProjectId || !hasPendingRun) {
-      return;
-    }
-
-    let cancelled = false;
-    const timer = setInterval(async () => {
-      try {
-        const runResult = await api.listRuns(selectedProjectId);
-        if (!cancelled) {
-          setRuns(runResult);
-        }
-      } catch {
-        // Transient refresh failures are ignored; the next tick retries.
-      }
-    }, 1500);
-
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, [selectedProjectId, hasPendingRun]);
 
   async function handleRun(testDefinitionId: string) {
     setRunningDefinitionId(testDefinitionId);
@@ -173,9 +122,7 @@ export default function Home() {
 
     try {
       await api.runTestDefinition(testDefinitionId);
-      if (selectedProjectId) {
-        await loadProjectDetail(selectedProjectId);
-      }
+      await reload();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to start test run');
     } finally {
@@ -288,7 +235,7 @@ export default function Home() {
                 ) : null}
                 <button
                   type="button"
-                  onClick={() => selectedProjectId && loadProjectDetail(selectedProjectId)}
+                  onClick={() => void reload()}
                   disabled={!selectedProjectId || detailState === 'loading'}
                   className="inline-flex h-9 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -330,7 +277,7 @@ export default function Home() {
               <div className="min-w-0 space-y-5">
                 <TestDefinitionForm
                   project={selectedProject}
-                  onCreated={() => loadProjectDetail(selectedProject.id)}
+                  onCreated={() => reload()}
                   onMessage={setMessage}
                 />
                 <AiSettingsPanel
