@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { TestRunsService } from './test-runs.service';
+import { RunArtifactWriter } from './run-artifact-writer.service';
 import { RunnerOutcome } from './playwright-runner.service';
 
 const buildDefinition = () => ({
@@ -104,12 +105,18 @@ const setup = (options: SetupOptions = {}) => {
     getRunJobState: jest.fn(async () => 'waiting'),
   };
 
+  // Use a real writer over the mocked repository/storage so the specs still
+  // exercise the full run -> artifact persistence path.
+  const artifactWriter = new RunArtifactWriter(
+    artifactRepository as never,
+    storage as never,
+  );
+
   const service = new TestRunsService(
     testRunRepository as never,
     testDefinitionRepository as never,
-    artifactRepository as never,
     runner as never,
-    storage as never,
+    artifactWriter,
     runQueue as never,
   );
 
