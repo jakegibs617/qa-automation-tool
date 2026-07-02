@@ -9,6 +9,9 @@ export type DetailLoadState = 'idle' | 'loading' | 'ready' | 'error';
  * Owns the selected project's detail workflow: loading test definitions and
  * run history together, tracking load state, and clearing both lists when no
  * project is selected. Rendering stays in the page component.
+ *
+ * `onMessage` must be referentially stable (e.g. a useState setter); an inline
+ * arrow would re-create `reload` every render and refetch in a loop.
  */
 export function useProjectDetail(
   projectId: string | null,
