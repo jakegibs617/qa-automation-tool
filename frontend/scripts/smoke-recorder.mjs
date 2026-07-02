@@ -1,4 +1,6 @@
 import { strict as assert } from 'node:assert';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import {
   actionToStep,
@@ -7,6 +9,34 @@ import {
   selectorFromTarget,
   targetFromElement,
 } from '../recorder-extension/recorder-core.js';
+import '../recorder-extension/selector-policy.js';
+
+// recorder-core.js (an ES module) and content-script.js (a classic MV3
+// content script that cannot use `import`) must resolve selector priority
+// through the same policy object rather than duplicating it.
+assert.equal(
+  targetFromElement,
+  globalThis.RecorderSelectorPolicy.targetFromElement,
+  'recorder-core.js must re-export the shared selector policy, not its own copy',
+);
+
+const contentScriptSource = readFileSync(
+  fileURLToPath(new URL('../recorder-extension/content-script.js', import.meta.url)),
+  'utf8',
+);
+for (const helperName of [
+  'function targetFromElement',
+  'function attr',
+  'function visibleText',
+  'function explicitOrInferredRole',
+  'function cssSelector',
+  'function cssEscape',
+]) {
+  assert.ok(
+    !contentScriptSource.includes(helperName),
+    `content-script.js must not redefine ${helperName}; it should read RecorderSelectorPolicy instead`,
+  );
+}
 
 function fakeElement(attrs) {
   return {
