@@ -76,11 +76,21 @@ export function isActionInRecordingScope(state, candidate) {
   }
 }
 
+const TEST_ID_ATTRS = ['data-testid', 'data-test-id', 'data-test', 'data-qa'];
+
+function testId(element) {
+  for (const name of TEST_ID_ATTRS) {
+    const value = attr(element, name);
+    if (value) return value;
+  }
+  return null;
+}
+
 export function targetFromElement(element) {
   const text = visibleText(element);
   const role = explicitOrInferredRole(element);
   return {
-    testId: attr(element, 'data-testid'),
+    testId: testId(element),
     ariaLabel: attr(element, 'aria-label'),
     role,
     text,

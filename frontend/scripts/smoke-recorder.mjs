@@ -5,7 +5,29 @@ import {
   isActionInRecordingScope,
   recordingToTestDefinition,
   selectorFromTarget,
+  targetFromElement,
 } from '../recorder-extension/recorder-core.js';
+
+function fakeElement(attrs) {
+  return {
+    tagName: 'DIV',
+    id: '',
+    className: '',
+    parentElement: null,
+    nodeType: 1,
+    textContent: '',
+    getAttribute: (name) => (name in attrs ? attrs[name] : null),
+  };
+}
+
+assert.equal(
+  targetFromElement(fakeElement({ 'data-qa': 'row-1' })).testId,
+  'row-1',
+);
+assert.equal(
+  targetFromElement(fakeElement({ 'data-testid': 'primary', 'data-qa': 'row-1' })).testId,
+  'primary',
+);
 
 assert.equal(
   selectorFromTarget({

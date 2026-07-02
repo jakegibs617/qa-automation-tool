@@ -1,8 +1,14 @@
 const ignoredSelector = '[data-qa-recorder-ignore="true"]';
+const interactiveSelector = 'a,button,input,textarea,select,[role],summary,[onclick]';
 
 document.addEventListener('click', (event) => {
-  const target = event.target?.closest?.('a,button,input,textarea,select,[role]');
-  if (!target || target.closest(ignoredSelector)) {
+  const origin = event.target;
+  if (!origin?.closest) return;
+  // Fall back to the clicked element itself so clicks on custom
+  // (non-semantic) controls still get recorded, e.g. a plain <div> with a
+  // click handler and no role attribute.
+  const target = origin.closest(interactiveSelector) || origin;
+  if (target.closest(ignoredSelector)) {
     return;
   }
 
@@ -82,11 +88,21 @@ function isSensitiveControl(element) {
   );
 }
 
+const TEST_ID_ATTRS = ['data-testid', 'data-test-id', 'data-test', 'data-qa'];
+
+function testId(element) {
+  for (const name of TEST_ID_ATTRS) {
+    const value = attr(element, name);
+    if (value) return value;
+  }
+  return null;
+}
+
 function targetFromElement(element) {
   const text = visibleText(element);
   const role = explicitOrInferredRole(element);
   return {
-    testId: attr(element, 'data-testid'),
+    testId: testId(element),
     ariaLabel: attr(element, 'aria-label'),
     role,
     text,
