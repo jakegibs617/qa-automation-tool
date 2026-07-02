@@ -6,6 +6,7 @@ import { ArtifactStorageService } from '../src/artifacts/artifact-storage.servic
 import { Project } from '../src/projects/project.entity';
 import { TestDefinition } from '../src/test-definitions/test-definition.entity';
 import { PlaywrightRunnerService } from '../src/test-runs/playwright-runner.service';
+import { RunArtifactWriter } from '../src/test-runs/run-artifact-writer.service';
 import { RunQueueService } from '../src/test-runs/run-queue.service';
 import { TestRun } from '../src/test-runs/test-run.entity';
 import { TestRunsService } from '../src/test-runs/test-runs.service';
@@ -58,9 +59,8 @@ async function main() {
     const service = new TestRunsService(
       runRepository,
       definitionRepository,
-      artifactRepository,
       {} as PlaywrightRunnerService,
-      {} as ArtifactStorageService,
+      new RunArtifactWriter(artifactRepository, {} as ArtifactStorageService),
       runQueue,
     );
 

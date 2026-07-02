@@ -1,21 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Artifact } from '../artifacts/artifact.entity';
-import { ArtifactStorageService } from '../artifacts/artifact-storage.service';
 import { TestDefinition } from '../test-definitions/test-definition.entity';
 import { TestRun, TestRunStatus } from './test-run.entity';
 import {
   PlaywrightRunnerService,
   RunnerOutcome,
 } from './playwright-runner.service';
+import { RunArtifactWriter } from './run-artifact-writer.service';
 import { RunQueueService } from './run-queue.service';
-import {
-  buildFailurePlaceholderSvg,
-  buildRunReport,
-  buildTracePlaceholder,
-  RunReport,
-} from './run-report';
+import { buildRunReport } from './run-report';
 
 @Injectable()
 export class TestRunsService {
@@ -24,10 +18,8 @@ export class TestRunsService {
     private readonly testRunRepository: Repository<TestRun>,
     @InjectRepository(TestDefinition)
     private readonly testDefinitionRepository: Repository<TestDefinition>,
-    @InjectRepository(Artifact)
-    private readonly artifactRepository: Repository<Artifact>,
     private readonly runner: PlaywrightRunnerService,
-    private readonly storage: ArtifactStorageService,
+    private readonly artifactWriter: RunArtifactWriter,
     private readonly runQueue: RunQueueService,
   ) {}
 
@@ -161,7 +153,7 @@ export class TestRunsService {
     // Artifact persistence is best-effort: a storage hiccup must not fail an
     // otherwise-completed run that is already saved.
     try {
-      await this.writeRunArtifacts(testRun, report, outcome);
+      await this.artifactWriter.writeRunArtifacts(testRun, report, outcome);
     } catch (error) {
       const reason = error instanceof Error ? error.message : 'Unknown artifact error';
       testRun.logs = [...testRun.logs, `Failed to persist run artifacts: ${reason}`];
@@ -231,81 +223,6 @@ export class TestRunsService {
     }
 
     return testRun;
-  }
-
-  private async writeRunArtifacts(
-    testRun: TestRun,
-    report: RunReport,
-    outcome: RunnerOutcome,
-  ) {
-    await this.saveArtifact(testRun, {
-      type: 'log',
-      storageKey: `runs/${testRun.id}/report.json`,
-      contentType: 'application/json',
-      content: JSON.stringify(report, null, 2),
-    });
-
-    if (report.status !== 'failed') {
-      return;
-    }
-
-    // Prefer the real Playwright artifacts; fall back to self-describing
-    // placeholders if capture failed (e.g. the browser crashed before a page
-    // existed) so the artifact list is never empty for a failed run.
-    if (outcome.screenshot) {
-      await this.saveArtifact(testRun, {
-        type: 'screenshot',
-        storageKey: `runs/${testRun.id}/failure.png`,
-        contentType: 'image/png',
-        content: outcome.screenshot,
-      });
-    } else {
-      await this.saveArtifact(testRun, {
-        type: 'screenshot',
-        storageKey: `runs/${testRun.id}/failure.svg`,
-        contentType: 'image/svg+xml',
-        content: buildFailurePlaceholderSvg(report),
-      });
-    }
-
-    if (outcome.trace) {
-      await this.saveArtifact(testRun, {
-        type: 'trace',
-        storageKey: `runs/${testRun.id}/trace.zip`,
-        contentType: 'application/zip',
-        content: outcome.trace,
-      });
-    } else {
-      await this.saveArtifact(testRun, {
-        type: 'trace',
-        storageKey: `runs/${testRun.id}/trace.placeholder.json`,
-        contentType: 'application/json',
-        content: buildTracePlaceholder(report),
-      });
-    }
-  }
-
-  private async saveArtifact(
-    testRun: TestRun,
-    input: {
-      type: Artifact['type'];
-      storageKey: string;
-      contentType: string;
-      content: Buffer | string;
-    },
-  ) {
-    const sizeBytes = await this.storage.write(input.storageKey, input.content);
-
-    return this.artifactRepository.save(
-      this.artifactRepository.create({
-        projectId: testRun.projectId,
-        testRunId: testRun.id,
-        type: input.type,
-        storageKey: input.storageKey,
-        contentType: input.contentType,
-        sizeBytes: String(sizeBytes),
-      }),
-    );
   }
 
   private async markRunFailed(

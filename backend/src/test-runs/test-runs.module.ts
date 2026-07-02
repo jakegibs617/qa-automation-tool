@@ -4,6 +4,7 @@ import { Artifact } from '../artifacts/artifact.entity';
 import { ArtifactsModule } from '../artifacts/artifacts.module';
 import { TestDefinition } from '../test-definitions/test-definition.entity';
 import { PlaywrightRunnerService } from './playwright-runner.service';
+import { RunArtifactWriter } from './run-artifact-writer.service';
 import { RunQueueService } from './run-queue.service';
 import { RunWorkerService } from './run-worker.service';
 import { StepDispatcherService } from './step-dispatcher.service';
@@ -20,6 +21,7 @@ import { TestRunsService } from './test-runs.service';
   providers: [
     StepDispatcherService,
     PlaywrightRunnerService,
+    RunArtifactWriter,
     RunQueueService,
     RunWorkerService,
     TestRunsService,
